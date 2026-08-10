@@ -1,0 +1,17 @@
+{
+  "name": "CGR 02 - Sistema de Localização",
+  "short_name": "CGR 02",
+  "description": "Mapa interativo da malha CGR 02: cruzamento de serviços do CM com o referenciamento linear",
+  "start_url": "/cadastromedicao/",
+  "display": "standalone",
+  "background_color": "#343a40",
+  "theme_color": "#207ba1",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/cadastromedicao/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
