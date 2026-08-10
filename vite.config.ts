@@ -13,6 +13,11 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  nitro: {
+    prerender: {
+      routes: ["/", "/cadastromedicao/"],
+    },
+  },
   vite: {
     base: "/cadastromedicao/",
     resolve: {
