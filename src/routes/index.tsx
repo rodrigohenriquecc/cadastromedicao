@@ -202,10 +202,10 @@ function Index() {
   };
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-muted">
+    <main className="relative h-[100dvh] w-full overflow-hidden bg-muted">
       <h1 className="sr-only">{title}</h1>
       <Suspense
-        fallback={<div className="flex h-screen w-screen items-center justify-center bg-muted" />}
+        fallback={<div className="flex h-[100dvh] w-full items-center justify-center bg-muted" />}
       >
         {mounted && (
           <MapView points={visiblePoints} mesh={mesh} target={target} regions={regions} byRoad={byRoad} />

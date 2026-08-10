@@ -135,19 +135,19 @@ export function HighwayPanel({
           <div className="p-3 sm:p-4 space-y-3 max-h-[70vh] overflow-y-auto custom-scrollbar">
             {/* Search Input */}
             <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar rodovia (ex: SP 270)..."
-                className="w-full rounded-xl border border-slate-700/80 bg-slate-950/60 py-2 pl-9 pr-8 text-xs text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+                className="w-full min-h-[44px] rounded-xl border border-slate-700/80 bg-slate-950/60 py-2.5 pl-10 pr-10 text-base md:text-xs text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 flex min-h-[44px] min-w-[44px] items-center justify-center text-xs text-slate-400 hover:text-white"
                 >
                   ✕
                 </button>

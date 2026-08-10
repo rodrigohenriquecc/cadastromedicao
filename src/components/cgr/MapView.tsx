@@ -89,12 +89,12 @@ function MapView({
   } | null>(null);
 
   return (
-    <div className="relative h-screen w-screen">
+    <div className="relative h-[100dvh] w-full">
       <MapContainer
         center={[-23.5, -47.6]}
         zoom={8}
         zoomControl={false}
-        className="h-screen w-screen"
+        className="h-[100dvh] w-full"
         preferCanvas
       >
         <TileLayer
