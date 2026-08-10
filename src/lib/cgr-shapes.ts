@@ -35,7 +35,7 @@ export async function loadShapefiles(urls = SHAPEFILE_URLS): Promise<Regions> {
 
 export const REGION_STYLE = {
   color: "#3b82f6",
-  weight: 4,
-  opacity: 0.7,
-  fillOpacity: 0,
+  weight: 1.5,
+  opacity: 0.4,
+  fillOpacity: 0.04,
 } as const;

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { ControlPanel } from "@/components/cgr/ControlPanel";
-import { parseBiCsv, parseCmWorkbook, parseKmz } from "@/lib/cgr-data";
+import { LeftSidebarPanel } from "@/components/cgr/LeftSidebarPanel";
+import { getHighwaySummaries, mergeMetaPoints, parseBiCsv, parseCmWorkbook, parseKmz, snapPointToRoad } from "@/lib/cgr-data";
 import { loadShapefiles, type Regions } from "@/lib/cgr-shapes";
 import type { BiPoint, MeshLine, ServicePoint } from "@/lib/cgr-types";
 import type { FitTarget } from "@/components/cgr/MapView";
@@ -33,8 +33,9 @@ function Index() {
   const [points, setPoints] = useState<ServicePoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("Carregando base de referência...");
-  const [road, setRoad] = useState("");
   const [selectedDescriptions, setSelectedDescriptions] = useState<string[]>([]);
+  const [selectedHighways, setSelectedHighways] = useState<string[]>([]);
+  const [selectedRcs, setSelectedRcs] = useState<string[]>([]);
   const [target, setTarget] = useState<FitTarget | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -46,11 +47,15 @@ function Index() {
     let cancelled = false;
     (async () => {
       try {
-        const [csvRes, kmzRes] = await Promise.all([
+        const [csvRes, metaRes, kmzRes] = await Promise.all([
           fetch("/data/planilha_bi.csv"),
+          fetch("/data/meta.csv").catch(() => null),
           fetch("/data/malha_dr02.kmz"),
         ]);
         const dict = parseBiCsv(await csvRes.text());
+        if (metaRes && metaRes.ok) {
+          mergeMetaPoints(dict, await metaRes.text());
+        }
         const lines = await parseKmz(await kmzRes.arrayBuffer());
         if (cancelled) return;
         setByRoad(dict);
@@ -77,24 +82,79 @@ function Index() {
     };
   }, []);
 
-  const roads = useMemo(() => Array.from(byRoad.keys()).sort(), [byRoad]);
+  const rcs = useMemo(() => {
+    const set = new Set<string>();
+    for (const pt of points) {
+      if (pt.rc) set.add(pt.rc);
+    }
+    return Array.from(set).sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
+    );
+  }, [points]);
 
-  const descriptions = useMemo(
-    () => Array.from(new Set(points.map((point) => point.descricao))).sort(),
-    [points],
-  );
+  const highwaySummaries = useMemo(() => {
+    const selectedRc = new Set(selectedRcs);
+    const relevantPoints =
+      selectedRc.size === 0
+        ? points
+        : points.filter((p) => p.rc && selectedRc.has(p.rc));
+    return getHighwaySummaries(byRoad, relevantPoints);
+  }, [byRoad, points, selectedRcs]);
+
+  const descriptions = useMemo(() => {
+    const selectedRc = new Set(selectedRcs);
+    const selectedHw = new Set(selectedHighways);
+
+    const relevantPoints = points.filter((p) => {
+      const matchRc = selectedRc.size === 0 || (p.rc && selectedRc.has(p.rc));
+      const matchHw = selectedHw.size === 0 || selectedHw.has(p.sp);
+      return matchRc && matchHw;
+    });
+
+    return Array.from(new Set(relevantPoints.map((point) => point.descricao))).sort();
+  }, [points, selectedRcs, selectedHighways]);
 
   const visiblePoints = useMemo(() => {
-    const selected = new Set(selectedDescriptions);
-    return points.filter((point) => selected.size === 0 || selected.has(point.descricao));
-  }, [points, selectedDescriptions]);
+    const selectedRc = new Set(selectedRcs);
+    const selectedHw = new Set(selectedHighways);
+    const selectedDesc = new Set(selectedDescriptions);
+
+    return points.filter((point) => {
+      const matchRc = selectedRc.size === 0 || (point.rc && selectedRc.has(point.rc));
+      const matchHw = selectedHw.size === 0 || selectedHw.has(point.sp);
+      const matchDesc = selectedDesc.size === 0 || selectedDesc.has(point.descricao);
+      return matchRc && matchHw && matchDesc;
+    });
+  }, [points, selectedRcs, selectedHighways, selectedDescriptions]);
+
+  useEffect(() => {
+    if (mesh.length > 0 && points.length > 0) {
+      setPoints((prev) =>
+        prev.map((pt) => {
+          const snapped = snapPointToRoad(pt.lat, pt.lon, pt.sp, mesh);
+          const snappedSegment = pt.segmentCoords?.map(([lat, lon]) => {
+            const s = snapPointToRoad(lat, lon, pt.sp, mesh);
+            return [s.lat, s.lon] as [number, number];
+          });
+          return {
+            ...pt,
+            lat: snapped.lat,
+            lon: snapped.lon,
+            segmentCoords: snappedSegment,
+          };
+        }),
+      );
+    }
+  }, [mesh]);
 
   const handleFile = async (file: File) => {
     setLoading(true);
     try {
-      const { points: parsed, total } = await parseCmWorkbook(await file.arrayBuffer(), byRoad);
+      const { points: parsed, total } = await parseCmWorkbook(await file.arrayBuffer(), byRoad, mesh);
       setPoints(parsed);
       setSelectedDescriptions([]);
+      setSelectedHighways([]);
+      setSelectedRcs([]);
       setStatus(`${parsed.length} de ${total} serviços localizados`);
     } catch {
       setStatus("Não foi possível ler este arquivo");
@@ -104,15 +164,40 @@ function Index() {
   };
 
   const handleLocate = () => {
-    if (!road) return;
-    const fromPoints = visiblePoints
-      .filter((point) => point.sp === road)
-      .map((point) => [point.lat, point.lon] as [number, number]);
-    const bounds =
-      fromPoints.length > 0
-        ? fromPoints
-        : (byRoad.get(road) ?? []).map((p) => [p.lat, p.lon] as [number, number]);
+    const bounds = visiblePoints.map((point) => [point.lat, point.lon] as [number, number]);
     if (bounds.length > 0) setTarget({ bounds, nonce: Date.now() });
+  };
+
+  const handleSelectHighway = (sp: string) => {
+    setSelectedHighways((prev) =>
+      prev.includes(sp) ? prev.filter((item) => item !== sp) : [...prev, sp],
+    );
+  };
+
+  const handleClearHighways = () => {
+    setSelectedHighways([]);
+  };
+
+  const handleResetAll = () => {
+    setSelectedHighways([]);
+    setSelectedDescriptions([]);
+    setSelectedRcs([]);
+  };
+
+  const handleLocateHighway = (sp: string) => {
+    const hwPoints = visiblePoints.filter((p) => p.sp === sp);
+    let bounds: [number, number][] = [];
+    if (hwPoints.length > 0) {
+      bounds = hwPoints.map((p) => [p.lat, p.lon] as [number, number]);
+    } else {
+      const biList = byRoad.get(sp);
+      if (biList && biList.length > 0) {
+        bounds = biList.map((p) => [p.lat, p.lon] as [number, number]);
+      }
+    }
+    if (bounds.length > 0) {
+      setTarget({ bounds, nonce: Date.now() });
+    }
   };
 
   return (
@@ -122,24 +207,34 @@ function Index() {
         fallback={<div className="flex h-screen w-screen items-center justify-center bg-muted" />}
       >
         {mounted && (
-          <MapView points={visiblePoints} mesh={mesh} target={target} regions={regions} />
+          <MapView points={visiblePoints} mesh={mesh} target={target} regions={regions} byRoad={byRoad} />
         )}
       </Suspense>
-      <div className="pointer-events-none absolute inset-0 z-[1000]">
-        <ControlPanel
-          roads={roads}
-          road={road}
-          onRoad={setRoad}
-          onLocate={handleLocate}
-          descriptions={descriptions}
-          selectedDescriptions={selectedDescriptions}
-          onDescriptions={setSelectedDescriptions}
-          onFile={handleFile}
-          loading={loading}
-          status={status}
-          visibleCount={visiblePoints.length}
-        />
-      </div>
+
+      <LeftSidebarPanel
+        highways={highwaySummaries}
+        selectedHighways={selectedHighways}
+        onSelectHighway={handleSelectHighway}
+        onSetHighways={setSelectedHighways}
+        onClearHighways={handleClearHighways}
+        onLocateHighway={handleLocateHighway}
+        rcs={rcs}
+        selectedRcs={selectedRcs}
+        onRcs={setSelectedRcs}
+        descriptions={descriptions}
+        selectedDescriptions={selectedDescriptions}
+        onDescriptions={setSelectedDescriptions}
+        onFile={handleFile}
+        loading={loading}
+        status={status}
+        onLocate={handleLocate}
+        visibleCount={visiblePoints.length}
+        totalCount={points.length}
+        visibleServices={visiblePoints}
+        onResetAll={handleResetAll}
+      />
     </main>
   );
 }
+
+

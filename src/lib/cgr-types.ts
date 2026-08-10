@@ -12,10 +12,18 @@ export type ServicePoint = {
   descricao: string;
   data: Date | null;
   quantidade: string;
+  sentido?: string;
+  comprimento?: string;
+  largura?: string;
+  altEsp?: string;
+  rc?: string;
   lat: number;
   lon: number;
+  segmentCoords?: [number, number][];
   layer: LayerKey;
   status: StatusKey;
+  corFundo?: string;
+  corTexto?: string;
 };
 
 export type MeshLine = { coords: [number, number][]; name: string };
