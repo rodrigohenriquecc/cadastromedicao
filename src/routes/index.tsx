@@ -47,10 +47,11 @@ function Index() {
     let cancelled = false;
     (async () => {
       try {
+        const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         const [csvRes, metaRes, kmzRes] = await Promise.all([
-          fetch("/data/planilha_bi.csv"),
-          fetch("/data/meta.csv").catch(() => null),
-          fetch("/data/malha_dr02.kmz"),
+          fetch(`${base}/data/planilha_bi.csv`),
+          fetch(`${base}/data/meta.csv`).catch(() => null),
+          fetch(`${base}/data/malha_dr02.kmz`),
         ]);
         const dict = parseBiCsv(await csvRes.text());
         if (metaRes && metaRes.ok) {
