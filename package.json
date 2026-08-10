@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d .output/public"
+    "postbuild": "node scripts/generate-html.js",
+    "deploy": "gh-pages -d dist/client"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
