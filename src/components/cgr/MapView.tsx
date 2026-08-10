@@ -94,6 +94,10 @@ function MapView({
         center={[-23.5, -47.6]}
         zoom={8}
         zoomControl={false}
+        touchZoom={true}
+        dragging={true}
+        doubleClickZoom={true}
+        bounceAtZoom={true}
         className="h-[100dvh] w-full"
         preferCanvas
       >
