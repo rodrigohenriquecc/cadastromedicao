@@ -14,7 +14,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    base: "/cadastromedicao-main/",
+    base: "/cadastromedicao/",
     resolve: {
       alias: {
         // but-unzip (shpjs dep) has no export condition for the worker runtime
