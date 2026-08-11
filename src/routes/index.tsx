@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { LeftSidebarPanel } from "@/components/cgr/LeftSidebarPanel";
-import { getHighwaySummaries, mergeMetaPoints, parseBiCsv, parseCmWorkbook, parseKmz, snapPointToRoad } from "@/lib/cgr-data";
+import { getHighwaySummaries, mergeMetaPoints, parseBiCsv, parseCmWorkbook, parseKmz, snapPointToRoad, snapSegmentToMesh } from "@/lib/cgr-data";
 import { loadShapefiles, type Regions } from "@/lib/cgr-shapes";
 import type { BiPoint, MeshLine, ServicePoint } from "@/lib/cgr-types";
 import type { FitTarget } from "@/components/cgr/MapView";
@@ -131,17 +131,21 @@ function Index() {
   useEffect(() => {
     if (mesh.length > 0 && points.length > 0) {
       setPoints((prev) =>
-        prev.map((pt) => {
+        prev.map((pt): ServicePoint => {
           const snapped = snapPointToRoad(pt.lat, pt.lon, pt.sp, mesh);
-          const snappedSegment = pt.segmentCoords?.map(([lat, lon]) => {
-            const s = snapPointToRoad(lat, lon, pt.sp, mesh);
-            return [s.lat, s.lon] as [number, number];
-          });
+          let snappedSegment: [number, number][] | undefined = undefined;
+
+          if (pt.segmentCoords && pt.segmentCoords.length > 1) {
+            const firstPt = pt.segmentCoords[0]!;
+            const lastPt = pt.segmentCoords[pt.segmentCoords.length - 1]!;
+            snappedSegment = snapSegmentToMesh(pt.sp, firstPt[0], firstPt[1], lastPt[0], lastPt[1], mesh, pt.segmentCoords);
+          }
+
           return {
             ...pt,
             lat: snapped.lat,
             lon: snapped.lon,
-            segmentCoords: snappedSegment,
+            segmentCoords: snappedSegment ?? undefined,
           };
         }),
       );

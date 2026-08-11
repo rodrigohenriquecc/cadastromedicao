@@ -1,20 +1,20 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
+  CircleMarker,
   GeoJSON,
   MapContainer,
-  Marker,
   Polyline,
   Popup,
   TileLayer,
   ZoomControl,
   useMap,
 } from "react-leaflet";
-import { MapPin, Camera, RadioTower, Construction, Calendar, Ruler, Layers } from "lucide-react";
+import { Calendar, Ruler, Layers } from "lucide-react";
 import type { BiPoint, MeshLine, ServicePoint, StatusKey } from "@/lib/cgr-types";
 import { REGION_STYLE, type Regions } from "@/lib/cgr-shapes";
-import { calculateKmFromLocation, formatKmBR } from "@/lib/cgr-data";
+import { calculateKmFromLocation, formatKmBR, resolveColorName } from "@/lib/cgr-data";
 
 const STATUS_COLOR: Record<StatusKey, string> = {
   atual: "#2563eb",
@@ -22,33 +22,11 @@ const STATUS_COLOR: Record<StatusKey, string> = {
   sem: "#111827",
 };
 
-const LAYER_ICON = {
-  fresa: MapPin,
-  cameras: Camera,
-  sensores: RadioTower,
-  obras: Construction,
-} as const;
-
-const iconCache = new Map<string, L.DivIcon>();
-
-function markerIcon(point: ServicePoint) {
-  const bgColor = point.corFundo || STATUS_COLOR[point.status];
-  const textColor = point.corTexto || "#ffffff";
-  const key = `${point.layer}-${point.status}-${bgColor}-${textColor}`;
-  const cached = iconCache.get(key);
-  if (cached) return cached;
-  
-  const html = `<span style="display:block;width:12px;height:12px;border-radius:9999px;background:${bgColor};border:1.5px solid rgba(255,255,255,0.95);box-shadow:0 1px 4px rgba(15,23,42,0.35);transition:transform 0.15s ease;"></span>`;
-
-  const icon = L.divIcon({
-    html,
-    className: "cgr-marker",
-    iconSize: [12, 12],
-    iconAnchor: [6, 6],
-    popupAnchor: [0, -6],
-  });
-  iconCache.set(key, icon);
-  return icon;
+export function getPointColor(point: ServicePoint): string {
+  if (point.corFundo && point.corFundo.trim() !== "") {
+    return resolveColorName(point.corFundo);
+  }
+  return STATUS_COLOR[point.status] || "#3b82f6";
 }
 
 export type FitTarget = { bounds: [number, number][]; nonce: number };
@@ -67,6 +45,60 @@ function FitBounds({ target }: { target: FitTarget | null }) {
 }
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR");
+
+function ServicePopup({ point }: { point: ServicePoint }) {
+  return (
+    <div className="min-w-56 space-y-2 font-sans">
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">
+            {point.sp}
+          </p>
+          {point.rc && (
+            <span className="rounded bg-teal-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-teal-900 border border-teal-300">
+              RC: {point.rc}
+            </span>
+          )}
+        </div>
+        <p className="text-sm font-semibold leading-snug text-foreground">
+          {point.descricao}
+        </p>
+      </div>
+      <dl className="space-y-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Calendar size={13} />
+          <span>{point.data ? dateFmt.format(point.data) : "Sem data registrada"}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Ruler size={13} />
+          <span>
+            Km {formatKmBR(point.kmInicial)}
+            {point.kmFinal !== null && point.kmFinal !== point.kmInicial
+              ? ` → ${formatKmBR(point.kmFinal)}`
+              : ""}
+          </span>
+        </div>
+        {point.sentido && (
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-[10px] uppercase text-slate-500">Sentido:</span>
+            <span>{point.sentido}</span>
+          </div>
+        )}
+        {(point.comprimento || point.largura || point.altEsp) && (
+          <div className="text-[11px] text-slate-600">
+            Dim: {[point.comprimento && `Comp: ${point.comprimento}`, point.largura && `Larg: ${point.largura}`, point.altEsp && `Alt/Esp: ${point.altEsp}`].filter(Boolean).join(" | ")}
+          </div>
+        )}
+        {point.quantidade && (
+          <div className="flex items-center gap-2">
+            <Layers size={13} />
+            <span>Qntd (final): {point.quantidade}</span>
+          </div>
+        )}
+      </dl>
+    </div>
+  );
+}
 
 function MapView({
   points,
@@ -97,7 +129,6 @@ function MapView({
         touchZoom="center"
         dragging={true}
         doubleClickZoom={true}
-        bounceAtZoom={true}
         className="h-[100dvh] w-full touch-none"
         preferCanvas
       >
@@ -133,29 +164,36 @@ function MapView({
           />
         ))}
 
-        {points.map(
-          (point) =>
-            point.segmentCoords &&
-            point.segmentCoords.length > 1 && (
-              <Polyline
-                key={`segment-${point.id}`}
-                positions={point.segmentCoords}
-                pathOptions={{
-                  color: point.corFundo || STATUS_COLOR[point.status],
-                  weight: 6,
-                  opacity: 0.8,
-                  lineCap: "round",
-                  lineJoin: "round",
-                }}
-              />
-            ),
-        )}
+        {/* Renderização de Trechos (Polylines espessas e tracejadas) para KM INICIAL !== KM FINAL */}
+        {points.map((point) => {
+          if (!point || !point.segmentCoords || point.segmentCoords.length <= 1) return null;
+          const color = getPointColor(point);
+
+          return (
+            <Polyline
+              key={`segment-${point.id}`}
+              positions={point.segmentCoords}
+              pathOptions={{
+                color: color,
+                weight: 6,
+                opacity: 0.95,
+                dashArray: "10, 10",
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            >
+              <Popup className="cgr-popup">
+                <ServicePopup point={point} />
+              </Popup>
+            </Polyline>
+          );
+        })}
 
         {/* Card (balãozinho) de Km aproximado ao clicar em qualquer ponto da rodovia */}
         {clickedInfo && (
           <Popup
             position={[clickedInfo.lat, clickedInfo.lon]}
-            onClose={() => setClickedInfo(null)}
+            eventHandlers={{ remove: () => setClickedInfo(null) }}
             className="cgr-popup"
           >
             <div className="min-w-44 space-y-1.5 font-sans p-1 text-center">
@@ -180,59 +218,32 @@ function MapView({
           </Popup>
         )}
 
-        {points.map((point) => (
-          <Marker key={point.id} position={[point.lat, point.lon]} icon={markerIcon(point)}>
-            <Popup className="cgr-popup">
-              <div className="min-w-56 space-y-2 font-sans">
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">
-                      {point.sp}
-                    </p>
-                    {point.rc && (
-                      <span className="rounded bg-teal-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-teal-900 border border-teal-300">
-                        RC: {point.rc}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm font-semibold leading-snug text-foreground">
-                    {point.descricao}
-                  </p>
-                </div>
-                <dl className="space-y-1 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={13} />
-                    <span>{point.data ? dateFmt.format(point.data) : "Sem data registrada"}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Ruler size={13} />
-                    <span>
-                      Km {formatKmBR(point.kmInicial)}
-                      {point.kmFinal !== null ? ` → ${formatKmBR(point.kmFinal)}` : ""}
-                    </span>
-                  </div>
-                  {point.sentido && (
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[10px] uppercase text-slate-500">Sentido:</span>
-                      <span>{point.sentido}</span>
-                    </div>
-                  )}
-                  {(point.comprimento || point.largura || point.altEsp) && (
-                    <div className="text-[11px] text-slate-600">
-                      Dim: {[point.comprimento && `Comp: ${point.comprimento}`, point.largura && `Larg: ${point.largura}`, point.altEsp && `Alt/Esp: ${point.altEsp}`].filter(Boolean).join(" | ")}
-                    </div>
-                  )}
-                  {point.quantidade && (
-                    <div className="flex items-center gap-2">
-                      <Layers size={13} />
-                      <span>Qntd (final): {point.quantidade}</span>
-                    </div>
-                  )}
-                </dl>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {/* Renderização de Marcadores (CircleMarker) para KM INICIAL === KM FINAL */}
+        {points.map((point) => {
+          if (!point || !Number.isFinite(point.lat) || !Number.isFinite(point.lon)) return null;
+          const hasSegment = point.segmentCoords && point.segmentCoords.length > 1;
+          if (hasSegment) return null;
+
+          const color = getPointColor(point);
+
+          return (
+            <CircleMarker
+              key={`point-${point.id}`}
+              center={[point.lat, point.lon]}
+              radius={7}
+              pathOptions={{
+                color: "#ffffff",
+                fillColor: color,
+                fillOpacity: 0.95,
+                weight: 2,
+              }}
+            >
+              <Popup className="cgr-popup">
+                <ServicePopup point={point} />
+              </Popup>
+            </CircleMarker>
+          );
+        })}
       </MapContainer>
     </div>
   );

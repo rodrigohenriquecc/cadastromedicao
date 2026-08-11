@@ -754,7 +754,9 @@ export function LeftSidebarPanel({
                             {filteredVisibleServices.map((pt, idx) => (
                               <tr key={pt.id || idx} className="hover:bg-sky-50/70 transition">
                                 <td className="px-2 py-1.5 font-mono font-bold text-slate-900 whitespace-nowrap">
-                                  {pt.kmInicial.toFixed(3).replace(".", ",")}
+                                  {typeof pt.kmInicial === "number" && Number.isFinite(pt.kmInicial)
+                                    ? pt.kmInicial.toFixed(3).replace(".", ",")
+                                    : pt.kmInicial ?? "-"}
                                 </td>
                                 <td className="px-2 py-1.5 font-mono font-bold text-slate-800 whitespace-nowrap">
                                   {pt.sp}

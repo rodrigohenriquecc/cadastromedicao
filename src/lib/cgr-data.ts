@@ -14,7 +14,8 @@ export const normalizeSp = (v: unknown) => {
   return m?.[1] ? `SP ${m[1].padStart(3, "0")}` : norm(v);
 };
 
-export const formatKmBR = (km: number): string => {
+export const formatKmBR = (km: number | null | undefined): string => {
+  if (km === null || km === undefined || !Number.isFinite(km)) return "-";
   return km.toLocaleString("pt-BR", {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3,
@@ -152,8 +153,11 @@ export function getHighwaySummaries(
 
   for (const [sp, biList] of byRoad.entries()) {
     if (!biList || biList.length === 0) continue;
-    const minKm = biList[0].km;
-    const maxKm = biList[biList.length - 1].km;
+    const firstBi = biList[0];
+    const lastBi = biList[biList.length - 1];
+    if (!firstBi || !lastBi) continue;
+    const minKm = firstBi.km;
+    const maxKm = lastBi.km;
     map.set(sp, {
       sp,
       minKm,
@@ -218,17 +222,21 @@ export function interpolateLocation(
   const list = byRoad.get(normSp);
   if (!list || list.length === 0) return null;
 
-  if (km <= list[0].km) {
-    return { lat: list[0].lat, lon: list[0].lon };
+  const first = list[0];
+  const last = list[list.length - 1];
+  if (!first || !last) return null;
+
+  if (km <= first.km) {
+    return { lat: first.lat, lon: first.lon };
   }
-  if (km >= list[list.length - 1].km) {
-    const last = list[list.length - 1];
+  if (km >= last.km) {
     return { lat: last.lat, lon: last.lon };
   }
 
   for (let i = 0; i < list.length - 1; i++) {
     const p1 = list[i];
     const p2 = list[i + 1];
+    if (!p1 || !p2) continue;
 
     if (km >= p1.km && km <= p2.km) {
       if (p1.km === p2.km) {
@@ -241,7 +249,7 @@ export function interpolateLocation(
     }
   }
 
-  return { lat: list[0].lat, lon: list[0].lon };
+  return { lat: first.lat, lon: first.lon };
 }
 
 export function interpolateSegment(
@@ -276,6 +284,137 @@ export function interpolateSegment(
   return coords;
 }
 
+export function snapSegmentToMesh(
+  sp: string,
+  startLat: number,
+  startLon: number,
+  endLat: number,
+  endLon: number,
+  mesh: MeshLine[],
+  fallbackCoords?: [number, number][],
+): [number, number][] {
+  if (!mesh || mesh.length === 0) return fallbackCoords || [[startLat, startLon], [endLat, endLon]];
+
+  const normTargetSp = normalizeSp(sp);
+  const targetClean = normTargetSp.replace(/[^A-Z0-9]/g, "");
+
+  let candidateLines = mesh.filter((m) => {
+    const lineNorm = normalizeSp(m.name).replace(/[^A-Z0-9]/g, "");
+    return (
+      lineNorm === targetClean ||
+      lineNorm.includes(targetClean) ||
+      targetClean.includes(lineNorm)
+    );
+  });
+
+  if (candidateLines.length === 0) {
+    candidateLines = mesh;
+  }
+
+  let bestLine: MeshLine | null = null;
+  let bestStartIdx = -1;
+  let bestEndIdx = -1;
+  let bestStartProj: [number, number] = [startLat, startLon];
+  let bestEndProj: [number, number] = [endLat, endLon];
+  let minTotalDistSq = Infinity;
+
+  for (const line of candidateLines) {
+    const coords = line.coords;
+    if (!coords || coords.length < 2) continue;
+
+    let minStartDistSq = Infinity;
+    let lineStartIdx = -1;
+    let lineStartProj: [number, number] = [startLat, startLon];
+
+    let minEndDistSq = Infinity;
+    let lineEndIdx = -1;
+    let lineEndProj: [number, number] = [endLat, endLon];
+
+    for (let i = 0; i < coords.length - 1; i++) {
+      const ptA = coords[i];
+      const ptB = coords[i + 1];
+      if (!ptA || !ptB) continue;
+      const [latA, lonA] = ptA;
+      const [latB, lonB] = ptB;
+
+      const dLat = latB - latA;
+      const dLon = lonB - lonA;
+      const lenSq = dLat * dLat + dLon * dLon;
+      if (lenSq === 0) continue;
+
+      const tStart = Math.max(0, Math.min(1, ((startLat - latA) * dLat + (startLon - lonA) * dLon) / lenSq));
+      const projStartLat = latA + tStart * dLat;
+      const projStartLon = lonA + tStart * dLon;
+      const distStartSq = (startLat - projStartLat) ** 2 + (startLon - projStartLon) ** 2;
+
+      if (distStartSq < minStartDistSq) {
+        minStartDistSq = distStartSq;
+        lineStartIdx = i;
+        lineStartProj = [projStartLat, projStartLon];
+      }
+
+      const tEnd = Math.max(0, Math.min(1, ((endLat - latA) * dLat + (endLon - lonA) * dLon) / lenSq));
+      const projEndLat = latA + tEnd * dLat;
+      const projEndLon = lonA + tEnd * dLon;
+      const distEndSq = (endLat - projEndLat) ** 2 + (endLon - projEndLon) ** 2;
+
+      if (distEndSq < minEndDistSq) {
+        minEndDistSq = distEndSq;
+        lineEndIdx = i;
+        lineEndProj = [projEndLat, projEndLon];
+      }
+    }
+
+    const totalDistSq = minStartDistSq + minEndDistSq;
+    if (totalDistSq < minTotalDistSq) {
+      minTotalDistSq = totalDistSq;
+      bestLine = line;
+      bestStartIdx = lineStartIdx;
+      bestEndIdx = lineEndIdx;
+      bestStartProj = lineStartProj;
+      bestEndProj = lineEndProj;
+    }
+  }
+
+  if (!bestLine || minTotalDistSq > 0.05 || bestStartIdx === -1 || bestEndIdx === -1) {
+    return fallbackCoords || [[startLat, startLon], [endLat, endLon]];
+  }
+
+  const coords = bestLine.coords;
+  const result: [number, number][] = [bestStartProj];
+
+  if (bestStartIdx === bestEndIdx) {
+    result.push(bestEndProj);
+  } else if (bestStartIdx < bestEndIdx) {
+    for (let k = bestStartIdx + 1; k <= bestEndIdx; k++) {
+      const pt = coords[k];
+      if (pt) result.push([pt[0], pt[1]]);
+    }
+    result.push(bestEndProj);
+  } else {
+    for (let k = bestStartIdx; k > bestEndIdx; k--) {
+      const pt = coords[k];
+      if (pt) result.push([pt[0], pt[1]]);
+    }
+    result.push(bestEndProj);
+  }
+
+  const cleaned: [number, number][] = [];
+  for (const pt of result) {
+    if (cleaned.length === 0) {
+      cleaned.push(pt);
+    } else {
+      const last = cleaned[cleaned.length - 1]!;
+      const dist = Math.abs(pt[0] - last[0]) + Math.abs(pt[1] - last[1]);
+      if (dist > 0.000001) {
+        cleaned.push(pt);
+      }
+    }
+  }
+
+  return cleaned.length > 1 ? cleaned : (fallbackCoords || [[startLat, startLon], [endLat, endLon]]);
+}
+
 export function snapPointToRoad(
   lat: number,
   lon: number,
@@ -307,8 +446,11 @@ export function snapPointToRoad(
   for (const line of candidateLines) {
     const coords = line.coords;
     for (let i = 0; i < coords.length - 1; i++) {
-      const [latA, lonA] = coords[i];
-      const [latB, lonB] = coords[i + 1];
+      const ptA = coords[i];
+      const ptB = coords[i + 1];
+      if (!ptA || !ptB) continue;
+      const [latA, lonA] = ptA;
+      const [latB, lonB] = ptB;
 
       const dLat = latB - latA;
       const dLon = lonB - lonA;
@@ -365,14 +507,17 @@ export function calculateKmFromLocation(
   }
 
   if (!list || list.length === 0) return null;
-  if (list.length === 1) return list[0].km;
+  const firstPt = list[0];
+  if (!firstPt) return null;
+  if (list.length === 1) return firstPt.km;
 
   let minDistanceSq = Infinity;
-  let bestKm = list[0].km;
+  let bestKm = firstPt.km;
 
   for (let i = 0; i < list.length - 1; i++) {
     const p1 = list[i];
     const p2 = list[i + 1];
+    if (!p1 || !p2) continue;
 
     const dLat = p2.lat - p1.lat;
     const dLon = p2.lon - p1.lon;
@@ -471,50 +616,97 @@ function parseDate(v: unknown): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-const COLOR_DICTIONARY: Record<string, { bg: string; text: string }> = {
-  verde: { bg: "#16a34a", text: "#ffffff" },
-  "verde-escuro": { bg: "#15803d", text: "#ffffff" },
-  "verde-claro": { bg: "#4ade80", text: "#0f172a" },
-  azul: { bg: "#2563eb", text: "#ffffff" },
-  "azul-escuro": { bg: "#1e3a8a", text: "#ffffff" },
-  "azul-claro": { bg: "#38bdf8", text: "#0f172a" },
-  vermelho: { bg: "#dc2626", text: "#ffffff" },
-  amarelo: { bg: "#eab308", text: "#0f172a" },
-  laranja: { bg: "#f97316", text: "#ffffff" },
-  roxo: { bg: "#9333ea", text: "#ffffff" },
-  violeta: { bg: "#7c3aed", text: "#ffffff" },
-  rosa: { bg: "#ec4899", text: "#ffffff" },
-  preto: { bg: "#0f172a", text: "#ffffff" },
-  cinza: { bg: "#64748b", text: "#ffffff" },
-  branco: { bg: "#ffffff", text: "#0f172a" },
-  marrom: { bg: "#78350f", text: "#ffffff" },
-  ciano: { bg: "#06b6d4", text: "#0f172a" },
-  turquesa: { bg: "#14b8a6", text: "#ffffff" },
-  dourado: { bg: "#d97706", text: "#ffffff" },
+export const COLOR_MAP: Record<string, string> = {
+  vermelho: "#ef4444",
+  vermelha: "#ef4444",
+  red: "#ef4444",
+
+  verde: "#32CD32",
+  "verde limao": "#32CD32",
+  "verde limão": "#32CD32",
+  "verde-limao": "#32CD32",
+  "verde escuro": "#15803d",
+  "verde-escuro": "#15803d",
+  "verde claro": "#4ade80",
+  "verde-claro": "#4ade80",
+  green: "#32CD32",
+
+  azul: "#3b82f6",
+  "azul escuro": "#1e3a8a",
+  "azul-escuro": "#1e3a8a",
+  "azul claro": "#38bdf8",
+  "azul-claro": "#38bdf8",
+  blue: "#3b82f6",
+
+  amarelo: "#eab308",
+  amarela: "#eab308",
+  yellow: "#eab308",
+
+  laranja: "#f97316",
+  orange: "#f97316",
+
+  preto: "#1e293b",
+  preta: "#1e293b",
+  black: "#1e293b",
+
+  cinza: "#64748b",
+  gray: "#64748b",
+  grey: "#64748b",
+
+  roxo: "#a855f7",
+  roxa: "#a855f7",
+  violeta: "#7c3aed",
+  purple: "#a855f7",
+
+  rosa: "#ec4899",
+  pink: "#ec4899",
+
+  marrom: "#78350f",
+  brown: "#78350f",
+
+  branco: "#ffffff",
+  branca: "#ffffff",
+  white: "#ffffff",
+
+  ciano: "#06b6d4",
+  turquesa: "#14b8a6",
+  dourado: "#d97706",
 };
 
-function parseSingleColor(raw: string): { bg?: string; text?: string } | null {
+export function resolveColorName(raw: string): string {
   const s = raw.trim().toLowerCase();
-  if (!s) return null;
-  if (COLOR_DICTIONARY[s]) return COLOR_DICTIONARY[s];
+  if (!s) return "blue";
+  if (COLOR_MAP[s]) return COLOR_MAP[s]!;
+  
+  const normalized = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (COLOR_MAP[normalized]) return COLOR_MAP[normalized]!;
+
   if (s.startsWith("#") || /^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) {
-    const hex = s.startsWith("#") ? s : `#${s}`;
-    return { bg: hex, text: "#ffffff" };
+    return s.startsWith("#") ? s : `#${s}`;
   }
-  return { bg: s, text: "#ffffff" };
+  return raw.trim();
 }
 
-export function parseCustomColor(val: unknown): { corFundo?: string; corTexto?: string } | null {
+function parseSingleColor(raw: string): { bg?: string; text?: string } | null {
+  const s = raw.trim();
+  if (!s) return null;
+  const bg = resolveColorName(s);
+  return { bg, text: "#ffffff" };
+}
+
+export function parseCustomColor(val: unknown): { corFundo?: string | undefined; corTexto?: string | undefined } | null {
   const str = String(val ?? "").trim();
   if (!str) return null;
 
   const parts = str.split(/[/,;:-]/).map((p) => p.trim()).filter(Boolean);
   if (parts.length >= 2) {
-    const bgObj = parseSingleColor(parts[0]);
-    const textObj = parseSingleColor(parts[1]);
+    const p0 = parts[0] ?? "";
+    const p1 = parts[1] ?? "";
+    const bgObj = parseSingleColor(p0);
+    const textObj = parseSingleColor(p1);
     return {
-      corFundo: bgObj?.bg || parts[0],
-      corTexto: textObj?.bg || parts[1],
+      corFundo: bgObj?.bg || resolveColorName(p0) || undefined,
+      corTexto: textObj?.bg || resolveColorName(p1) || undefined,
     };
   }
 
@@ -537,7 +729,9 @@ export async function parseCmWorkbook(
   let total = 0;
 
   for (const sheetName of wb.SheetNames) {
-    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[sheetName]!, {
+    const sheet = wb.Sheets[sheetName];
+    if (!sheet) continue;
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
       defval: "",
     });
     for (const [i, row] of rows.entries()) {
@@ -552,26 +746,28 @@ export async function parseCmWorkbook(
       };
       const sp = normalizeSp(pick("SP", "RODOVIA"));
       const kmInicial = toNumber(pick("KM INICIAL", "KM INICIO", "KM"));
-      if (!sp || kmInicial === null) continue;
+      if (!sp || kmInicial === null || !Number.isFinite(kmInicial)) continue;
       
       let loc = interpolateLocation(byRoad, sp, kmInicial);
-      if (!loc) continue;
+      if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lon)) continue;
 
       if (mesh && mesh.length > 0) {
         loc = snapPointToRoad(loc.lat, loc.lon, sp, mesh);
       }
+      if (!Number.isFinite(loc.lat) || !Number.isFinite(loc.lon)) continue;
 
-      const kmFinal = toNumber(pick("KM FINAL"));
-      let segmentCoords =
-        kmFinal !== null && kmFinal !== kmInicial
-          ? interpolateSegment(byRoad, sp, kmInicial, kmFinal)
-          : undefined;
+      const kmFinalRaw = toNumber(pick("KM FINAL", "KM FIN", "KM_FINAL", "KM F", "KM-FINAL", "KMFINAL"));
+      const isDifferentKm = kmFinalRaw !== null && Number.isFinite(kmFinalRaw) && Math.abs(kmFinalRaw - kmInicial) >= 0.001;
+      const kmFinal = isDifferentKm ? kmFinalRaw : kmInicial;
 
-      if (segmentCoords && mesh && mesh.length > 0) {
-        segmentCoords = segmentCoords.map(([lat, lon]) => {
-          const s = snapPointToRoad(lat, lon, sp, mesh);
-          return [s.lat, s.lon] as [number, number];
-        });
+      let segmentCoords = isDifferentKm
+        ? interpolateSegment(byRoad, sp, kmInicial, kmFinal)
+        : undefined;
+
+      if (segmentCoords && segmentCoords.length > 1 && mesh && mesh.length > 0) {
+        const firstPt = segmentCoords[0]!;
+        const lastPt = segmentCoords[segmentCoords.length - 1]!;
+        segmentCoords = snapSegmentToMesh(sp, firstPt[0], firstPt[1], lastPt[0], lastPt[1], mesh, segmentCoords);
       }
 
       const descricao = String(pick("DESCRICAO", "SERVICO", "DESCRIÇÃO") ?? "").trim();
@@ -598,7 +794,8 @@ export async function parseCmWorkbook(
       const altEsp = String(pick("ALTURA", "ALT", "ESPESSURA", "ESP", "ESP. (CM)", "ESP (CM)", "ESP (M)", "ESP.(M)", "ALT. OU ESP.", "ALT/ESP") ?? "").trim();
       const rc = String(pick("RC", "Nº RC", "NO RC", "NUMERO RC", "REGISTRO RC", "RC N") ?? "").trim();
 
-      const corVal = pick("COR", "CORES", "COR DA BOLINHA", "COR BOLINHA", "COR MARCADOR") ?? (keys[10] ? row[keys[10]] : undefined);
+      const k10 = keys[10];
+      const corVal = pick("COR", "CORES", "COR DA BOLINHA", "COR BOLINHA", "COR MARCADOR") ?? (k10 ? row[k10] : undefined);
       const customColors = parseCustomColor(corVal);
 
       points.push({
@@ -614,8 +811,8 @@ export async function parseCmWorkbook(
         largura: largura || undefined,
         altEsp: altEsp || undefined,
         rc: rc || undefined,
-        corFundo: customColors?.corFundo,
-        corTexto: customColors?.corTexto,
+        corFundo: customColors?.corFundo ?? undefined,
+        corTexto: customColors?.corTexto ?? undefined,
         lat: loc.lat,
         lon: loc.lon,
         segmentCoords: segmentCoords && segmentCoords.length > 1 ? segmentCoords : undefined,
