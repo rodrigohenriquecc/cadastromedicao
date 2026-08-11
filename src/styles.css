@@ -357,4 +357,35 @@ select,
   animation: siren-polyline-glow 1.2s infinite alternate ease-in-out;
 }
 
+/* Mobile Touch & Leaflet Popup Enhancements */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.leaflet-container .leaflet-popup-close-button {
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 22px !important;
+  line-height: 32px !important;
+  color: #475569 !important;
+  padding: 0 !important;
+  top: 4px !important;
+  right: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 9999px !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+}
+
+.leaflet-container .leaflet-popup-close-button:hover,
+.leaflet-container .leaflet-popup-close-button:active {
+  color: #0f172a !important;
+  background-color: #e2e8f0 !important;
+}
+
+.touch-pan-x {
+  -webkit-overflow-scrolling: touch;
+}
+
 

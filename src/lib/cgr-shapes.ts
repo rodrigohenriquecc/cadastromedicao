@@ -1,5 +1,7 @@
 import type { FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
+const getBaseUrl = () => (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+
 export const SHAPEFILE_URLS = [
   "/data/shapefiles/RC_2.1.zip",
   "/data/shapefiles/RC_2.2.zip",
@@ -14,18 +16,29 @@ export type Regions = FeatureCollection<Geometry, GeoJsonProperties>;
 export async function loadShapefiles(urls = SHAPEFILE_URLS): Promise<Regions> {
   const shp = (await import("shpjs")).default;
   const features: Regions["features"] = [];
+  const base = getBaseUrl();
 
   await Promise.all(
-    urls.map(async (url) => {
+    urls.map(async (rawUrl) => {
       try {
+        const url =
+          rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
+            ? rawUrl
+            : rawUrl.startsWith(base)
+              ? rawUrl
+              : `${base}${rawUrl.startsWith("/") ? "" : "/"}${rawUrl}`;
+
         const res = await fetch(url);
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.warn(`[cgr-shapes] Falha ao carregar ${url}: status ${res.status}`);
+          return;
+        }
         const parsed = await shp(await res.arrayBuffer());
         for (const fc of Array.isArray(parsed) ? parsed : [parsed]) {
           if (fc?.features?.length) features.push(...fc.features);
         }
-      } catch {
-        /* ignora shapefile inválido */
+      } catch (err) {
+        console.error(`[cgr-shapes] Erro ao processar shapefile ${rawUrl}:`, err);
       }
     }),
   );
@@ -35,7 +48,7 @@ export async function loadShapefiles(urls = SHAPEFILE_URLS): Promise<Regions> {
 
 export const REGION_STYLE = {
   color: "#3b82f6",
-  weight: 1.5,
-  opacity: 0.4,
-  fillOpacity: 0.04,
+  weight: 2,
+  opacity: 0.65,
+  fillOpacity: 0.29,
 } as const;

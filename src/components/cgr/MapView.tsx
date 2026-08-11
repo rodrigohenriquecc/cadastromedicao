@@ -182,7 +182,7 @@ function MapView({
                 lineJoin: "round",
               }}
             >
-              <Popup className="cgr-popup">
+              <Popup className="cgr-popup" autoPan={true} autoPanPadding={L.point(24, 24)}>
                 <ServicePopup point={point} />
               </Popup>
             </Polyline>
@@ -195,6 +195,8 @@ function MapView({
             position={[clickedInfo.lat, clickedInfo.lon]}
             eventHandlers={{ remove: () => setClickedInfo(null) }}
             className="cgr-popup"
+            autoPan={true}
+            autoPanPadding={L.point(24, 24)}
           >
             <div className="min-w-44 space-y-1.5 font-sans p-1 text-center">
               <div className="flex items-center justify-between gap-2 border-b pb-1.5">
@@ -230,15 +232,15 @@ function MapView({
             <CircleMarker
               key={`point-${point.id}`}
               center={[point.lat, point.lon]}
-              radius={7}
+              radius={8}
               pathOptions={{
                 color: "#ffffff",
                 fillColor: color,
                 fillOpacity: 0.95,
-                weight: 2,
+                weight: 2.5,
               }}
             >
-              <Popup className="cgr-popup">
+              <Popup className="cgr-popup" autoPan={true} autoPanPadding={L.point(24, 24)}>
                 <ServicePopup point={point} />
               </Popup>
             </CircleMarker>

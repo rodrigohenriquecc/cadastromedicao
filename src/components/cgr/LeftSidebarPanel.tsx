@@ -17,6 +17,7 @@ import {
   ChevronUp,
   Calculator,
   HardHat,
+  X,
 } from "lucide-react";
 import type { HighwaySummary } from "@/lib/cgr-data";
 import type { ServicePoint } from "@/lib/cgr-types";
@@ -245,33 +246,45 @@ export function LeftSidebarPanel({
         >
           {/* Top Header Banner (Authentic DER Blue Navbar) */}
           <div className="flex shrink-0 items-center justify-between bg-[#207ba1] px-3.5 py-3 text-white shadow-md border-b border-[#185e7b] min-h-[52px]">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
               {/* DER Yellow Sun Logo Badge with Engineering Helmet */}
               <div className="flex h-8 shrink-0 items-center justify-center gap-1 rounded bg-[#ffd600] px-2 font-black italic text-[#1b5e91] text-xs shadow border border-yellow-300">
                 <HardHat className="h-4 w-4 shrink-0 text-[#1b5e91]" />
                 <span>DER</span>
               </div>
-              <div className="leading-tight">
-                <h1 className="text-xs font-black tracking-wide uppercase text-white">
+              <div className="leading-tight min-w-0">
+                <h1 className="text-xs font-black tracking-wide uppercase text-white truncate">
                   Sistema de Administração
                 </h1>
-                <p className="text-[10px] font-semibold text-sky-100">
+                <p className="text-[10px] font-semibold text-sky-100 truncate">
                   Conservação • CGR 02
                 </p>
               </div>
             </div>
 
-            {hasAnyFilter && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {hasAnyFilter && (
+                <button
+                  type="button"
+                  onClick={onResetAll}
+                  className="flex items-center gap-1.5 rounded-lg border border-[#ffc107] bg-[#ffc107]/10 px-2.5 py-1.5 text-xs font-bold text-[#ffc107] hover:bg-[#ffc107] hover:text-slate-950 transition shadow-sm min-h-[44px] cursor-pointer"
+                  title="Limpar todos os filtros"
+                >
+                  <RotateCcw size={14} />
+                  <span className="hidden sm:inline">Limpar</span>
+                </button>
+              )}
+              {/* Mobile Close Button (X) */}
               <button
                 type="button"
-                onClick={onResetAll}
-                className="flex items-center gap-1.5 rounded-lg border border-[#ffc107] bg-[#ffc107]/10 px-3 py-2 text-xs font-bold text-[#ffc107] hover:bg-[#ffc107] hover:text-slate-950 transition shadow-sm min-h-[44px] cursor-pointer"
-                title="Limpar todos os filtros"
+                onClick={() => setOpen(false)}
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-black/20 text-white hover:bg-black/40 active:scale-95 transition md:hidden cursor-pointer min-h-[44px] min-w-[44px]"
+                title="Fechar painel"
+                aria-label="Fechar painel"
               >
-                <RotateCcw size={14} />
-                <span>Limpar</span>
+                <X size={20} />
               </button>
-            )}
+            </div>
           </div>
 
           {/* DER Inset Search Box ("Procurar") - Touch Friendly & Anti-Zoom */}
@@ -408,9 +421,11 @@ export function LeftSidebarPanel({
                     placeholder="Selecione os registros RC..."
                     noOptionsMessage={() => "Nenhum RC disponível no arquivo"}
                     menuPlacement="auto"
+                    menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
                     maxMenuHeight={220}
                     classNamePrefix="sidebar-select"
                     styles={{
+                      menuPortal: (base) => ({ ...base, zIndex: 99999 }),
                       control: (base) => ({
                         ...base,
                         minHeight: 44,
@@ -504,9 +519,11 @@ export function LeftSidebarPanel({
                     placeholder="Selecione as rodovias..."
                     noOptionsMessage={() => "Carregue o CM.xlsx para ver rodovias"}
                     menuPlacement="auto"
+                    menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
                     maxMenuHeight={220}
                     classNamePrefix="sidebar-select"
                     styles={{
+                      menuPortal: (base) => ({ ...base, zIndex: 99999 }),
                       control: (base) => ({
                         ...base,
                         minHeight: 44,
@@ -642,9 +659,11 @@ export function LeftSidebarPanel({
                     placeholder="Selecione os serviços desejados..."
                     noOptionsMessage={() => "Carregue o CM.xlsx para ver serviços"}
                     menuPlacement="auto"
+                    menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
                     maxMenuHeight={220}
                     classNamePrefix="sidebar-select"
                     styles={{
+                      menuPortal: (base) => ({ ...base, zIndex: 99999 }),
                       control: (base) => ({
                         ...base,
                         minHeight: 44,
@@ -822,6 +841,58 @@ export function LeftSidebarPanel({
           </button>
         </div>
       </div>
+
+      {/* Mobile Floating Action Dock (Visible only on smartphones when sidebar is closed) */}
+      {!open && (
+        <div className="pointer-events-auto fixed bottom-3 left-3 right-3 z-[990] flex items-center justify-between gap-1.5 rounded-2xl border border-slate-700/80 bg-[#1e2327]/95 p-2 text-white shadow-2xl backdrop-blur-md md:hidden pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+          {/* 1. Toggle Sidebar Drawer */}
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#207ba1] py-2.5 px-3 text-xs font-extrabold text-white shadow-md active:scale-95 transition cursor-pointer min-h-[44px]"
+          >
+            <SlidersHorizontal size={16} className="text-[#ffd600]" />
+            <span>Filtros</span>
+            {hasAnyFilter && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ffd600] px-1 font-mono text-[10px] font-black text-[#1b5e91]">
+                {(selectedHighways.length > 0 ? 1 : 0) + (selectedRcs.length > 0 ? 1 : 0) + (selectedDescriptions.length > 0 ? 1 : 0) + (highwaySearch.trim() ? 1 : 0)}
+              </span>
+            )}
+          </button>
+
+          {/* 2. Fit Bounds / Locate Services */}
+          <button
+            type="button"
+            onClick={onLocate}
+            className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-800 border border-slate-700 py-2.5 px-3 text-xs font-bold text-slate-200 hover:bg-slate-700 active:scale-95 transition cursor-pointer min-h-[44px]"
+            title="Centralizar serviços no mapa"
+          >
+            <Crosshair size={16} className="text-sky-400" />
+            <span className="text-[11px]">Mapa</span>
+          </button>
+
+          {/* 3. Quick Upload CM.xlsx */}
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 py-2.5 px-3 text-xs font-bold text-amber-300 hover:bg-amber-500/30 active:scale-95 transition cursor-pointer min-h-[44px]"
+            title="Importar planilha CM.xlsx"
+          >
+            <Upload size={16} />
+            <span className="text-[11px]">CM</span>
+          </button>
+
+          {/* 4. Total QNTD KPI Badge on Mobile */}
+          {totalQuantidade !== null && (
+            <div className="flex flex-col items-end justify-center rounded-xl bg-[#14171a] border border-slate-800 px-2.5 py-1 text-right">
+              <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Total</span>
+              <span className="font-mono text-xs font-black text-[#ffc107]">
+                {totalQuantidade.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }
