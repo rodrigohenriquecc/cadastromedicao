@@ -152,18 +152,55 @@ function Index() {
     }
   }, [mesh]);
 
-  const handleFile = async (file: File) => {
+  const DEFAULT_GOOGLE_SHEETS_URL =
+    "https://docs.google.com/spreadsheets/d/1aGRRJrDp-Sq93CQgX-wHyXa9G-BJUpvy/export?format=xlsx";
+
+  const handleProcessBuffer = async (buffer: ArrayBuffer, originLabel = "arquivo") => {
     setLoading(true);
     try {
-      const { points: parsed, total } = await parseCmWorkbook(await file.arrayBuffer(), byRoad, mesh);
+      const { points: parsed, total } = await parseCmWorkbook(buffer, byRoad, mesh);
       setPoints(parsed);
       setSelectedDescriptions([]);
       setSelectedHighways([]);
       setSelectedRcs([]);
-      setStatus(`${parsed.length} de ${total} serviços localizados`);
+      setStatus(`${parsed.length} de ${total} serviços localizados (${originLabel})`);
     } catch {
-      setStatus("Não foi possível ler este arquivo");
+      setStatus("Não foi possível ler esta planilha");
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFile = async (file: File) => {
+    await handleProcessBuffer(await file.arrayBuffer(), "arquivo local");
+  };
+
+  const handleFetchGoogleDrive = async (customUrl?: string) => {
+    setLoading(true);
+    setStatus("Baixando planilha online do Google Drive...");
+    try {
+      const rawUrl = customUrl || DEFAULT_GOOGLE_SHEETS_URL;
+      let exportUrl = rawUrl;
+      const match = rawUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        exportUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=xlsx`;
+      }
+
+      let res = await fetch(exportUrl).catch(() => null);
+      if (!res || !res.ok) {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(exportUrl)}`;
+        res = await fetch(proxyUrl).catch(() => null);
+      }
+
+      if (!res || !res.ok) {
+        throw new Error(`HTTP ${res?.status || "error"}`);
+      }
+
+      const buffer = await res.arrayBuffer();
+      await handleProcessBuffer(buffer, "Google Drive");
+    } catch (err) {
+      console.error("[Google Drive Sync Error]", err);
+      setStatus("Falha ao conectar com o Google Drive");
       setLoading(false);
     }
   };
@@ -230,6 +267,7 @@ function Index() {
         selectedDescriptions={selectedDescriptions}
         onDescriptions={setSelectedDescriptions}
         onFile={handleFile}
+        onFetchGoogleDrive={handleFetchGoogleDrive}
         loading={loading}
         status={status}
         onLocate={handleLocate}

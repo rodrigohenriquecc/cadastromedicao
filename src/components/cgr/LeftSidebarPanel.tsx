@@ -18,6 +18,9 @@ import {
   Calculator,
   HardHat,
   X,
+  CloudDownload,
+  ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 import type { HighwaySummary } from "@/lib/cgr-data";
 import type { ServicePoint } from "@/lib/cgr-types";
@@ -44,6 +47,7 @@ type Props = {
 
   // File Upload & Locate
   onFile: (file: File) => void;
+  onFetchGoogleDrive?: () => void;
   loading: boolean;
   status: string;
   onLocate: () => void;
@@ -111,6 +115,7 @@ export function LeftSidebarPanel({
   selectedDescriptions,
   onDescriptions,
   onFile,
+  onFetchGoogleDrive,
   loading,
   status,
   onLocate,
@@ -344,7 +349,53 @@ export function LeftSidebarPanel({
               </button>
 
               {sections.upload && (
-                <div className="p-3 bg-white text-slate-900 border-t border-slate-300">
+                <div className="p-3 bg-white text-slate-900 border-t border-slate-300 space-y-3">
+                  {/* Google Drive Online Sync Box */}
+                  <div className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-3 shadow-xs">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="flex items-center gap-1.5 text-xs font-black text-emerald-900 uppercase tracking-wide">
+                        <CloudDownload size={16} className="text-emerald-600 animate-pulse" />
+                        Planilha Online (Google Drive)
+                      </span>
+                      <a
+                        href="https://docs.google.com/spreadsheets/d/1aGRRJrDp-Sq93CQgX-wHyXa9G-BJUpvy/edit?usp=sharing"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-900 hover:underline cursor-pointer"
+                        title="Abrir no Google Sheets em nova aba"
+                      >
+                        <span>Abrir</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => onFetchGoogleDrive?.()}
+                      disabled={loading}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700 active:scale-95 disabled:opacity-60 transition cursor-pointer min-h-[44px]"
+                    >
+                      {loading ? (
+                        <Loader2 size={16} className="animate-spin text-white" />
+                      ) : (
+                        <RefreshCw size={16} className="text-emerald-200" />
+                      )}
+                      <span>{loading ? "Sincronizando do Google Drive..." : "Puxar Dados do Google Drive"}</span>
+                    </button>
+                    <p className="mt-1.5 text-[10px] font-semibold text-emerald-800 text-center">
+                      Carrega instantaneamente a planilha CM oficial compartilhada no nuvem.
+                    </p>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="relative flex items-center justify-center my-1">
+                    <div className="w-full border-t border-slate-200" />
+                    <span className="absolute bg-white px-2 font-mono text-[10px] font-bold text-slate-400 uppercase">
+                      ou arquivo local
+                    </span>
+                  </div>
+
+                  {/* Local File Upload Drop Zone */}
                   <div
                     onDragOver={(e) => {
                       e.preventDefault();
@@ -358,21 +409,20 @@ export function LeftSidebarPanel({
                       if (file) onFile(file);
                     }}
                     onClick={() => inputRef.current?.click()}
-                    className={`cursor-pointer rounded-lg border-2 border-dashed min-h-[56px] p-3.5 text-center transition flex flex-col items-center justify-center ${
+                    className={`cursor-pointer rounded-lg border-2 border-dashed min-h-[52px] p-3 text-center transition flex flex-col items-center justify-center ${
                       dragging
                         ? "border-[#207ba1] bg-sky-50 text-[#207ba1] font-bold"
-                        : "border-slate-300 bg-slate-50 text-slate-700 hover:border-[#207ba1] hover:bg-sky-50/50 shadow-sm"
+                        : "border-slate-300 bg-slate-50 text-slate-700 hover:border-[#207ba1] hover:bg-sky-50/50 shadow-xs"
                     }`}
                   >
                     <div className="flex items-center justify-center gap-2 font-bold text-xs text-slate-900">
                       {loading ? (
-                        <Loader2 size={18} className="animate-spin text-[#207ba1]" />
+                        <Loader2 size={16} className="animate-spin text-[#207ba1]" />
                       ) : (
-                        <Upload size={18} className="text-[#207ba1]" />
+                        <Upload size={16} className="text-[#207ba1]" />
                       )}
-                      <span>{loading ? "Processando arquivo..." : "Solte o CM.xlsx aqui ou clique"}</span>
+                      <span>{loading ? "Processando..." : "Solte o CM.xlsx local ou clique"}</span>
                     </div>
-                    <p className="mt-1 text-[11px] font-semibold text-slate-600">{status}</p>
                     <input
                       ref={inputRef}
                       type="file"
@@ -383,6 +433,11 @@ export function LeftSidebarPanel({
                         if (file) onFile(file);
                       }}
                     />
+                  </div>
+
+                  {/* Status Box */}
+                  <div className="rounded-md bg-slate-100 p-2 text-center border border-slate-200">
+                    <p className="text-[11px] font-semibold text-slate-700 leading-snug">{status}</p>
                   </div>
                 </div>
               )}
