@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import Select from "react-select";
 import {
   Route,
@@ -123,6 +123,13 @@ export function LeftSidebarPanel({
   const [highwaySearch, setHighwaySearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-collapse sidebar on mobile viewports on initial load/resize
+  useEffect(() => {
+    if (isMobile) {
+      setOpen(false);
+    }
+  }, [isMobile]);
+
   // Accordion section collapse state
   const [sections, setSections] = useState({
     upload: true,
@@ -228,10 +235,10 @@ export function LeftSidebarPanel({
         />
       )}
 
-      <div className="pointer-events-auto fixed left-0 top-0 bottom-0 z-[1000] select-none font-sans">
+      <div className="pointer-events-none fixed left-0 top-0 bottom-0 z-[1000] font-sans">
         {/* Main Left Sidebar Panel (DER Charcoal Dark Theme) */}
         <div
-          className={`relative flex h-full w-[88vw] max-w-[340px] sm:w-[380px] flex-col border-r border-[#212529] bg-[#343a40] text-slate-100 shadow-2xl transition-transform duration-300 ease-in-out ${
+          className={`pointer-events-auto relative flex h-full w-[88vw] max-w-[340px] sm:w-[380px] flex-col border-r border-[#212529] bg-[#343a40] text-slate-100 shadow-2xl transition-transform duration-300 ease-in-out ${
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >
@@ -803,7 +810,7 @@ export function LeftSidebarPanel({
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
-            className="absolute left-full top-1/2 -translate-y-1/2 flex min-h-[52px] min-w-[44px] h-16 w-11 items-center justify-center rounded-r-xl border-2 border-l-0 border-[#212529] bg-[#207ba1] text-white shadow-2xl hover:bg-[#1a6291] active:scale-95 transition cursor-pointer z-50"
+            className="pointer-events-auto absolute left-full top-1/2 -translate-y-1/2 flex min-h-[52px] min-w-[44px] h-16 w-11 items-center justify-center rounded-r-xl border-2 border-l-0 border-[#212529] bg-[#207ba1] text-white shadow-2xl hover:bg-[#1a6291] active:scale-95 transition cursor-pointer z-50"
             title={open ? "Recolher painel lateral" : "Expandir painel de controle"}
             aria-label={open ? "Recolher painel lateral" : "Expandir painel de controle"}
           >

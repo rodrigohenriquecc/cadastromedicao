@@ -159,8 +159,14 @@
   background: #ffffff;
 }
 
-.leaflet-container {
+.leaflet-container,
+.leaflet-pane,
+.leaflet-tile-container,
+.leaflet-marker-pane {
   font-family: inherit;
+  touch-action: none !important;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .marker-cluster,

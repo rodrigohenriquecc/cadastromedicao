@@ -89,16 +89,16 @@ function MapView({
   } | null>(null);
 
   return (
-    <div className="relative h-[100dvh] w-full">
+    <div className="relative h-[100dvh] w-full touch-none select-none">
       <MapContainer
         center={[-23.5, -47.6]}
         zoom={8}
         zoomControl={false}
-        touchZoom={true}
+        touchZoom="center"
         dragging={true}
         doubleClickZoom={true}
         bounceAtZoom={true}
-        className="h-[100dvh] w-full"
+        className="h-[100dvh] w-full touch-none"
         preferCanvas
       >
         <TileLayer
