@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
   Calculator,
+  HardHat,
 } from "lucide-react";
 import type { HighwaySummary } from "@/lib/cgr-data";
 import type { ServicePoint } from "@/lib/cgr-types";
@@ -245,9 +246,10 @@ export function LeftSidebarPanel({
           {/* Top Header Banner (Authentic DER Blue Navbar) */}
           <div className="flex shrink-0 items-center justify-between bg-[#207ba1] px-3.5 py-3 text-white shadow-md border-b border-[#185e7b] min-h-[52px]">
             <div className="flex items-center gap-2.5">
-              {/* DER Yellow Sun Logo Badge */}
-              <div className="flex h-8 w-11 shrink-0 items-center justify-center rounded bg-[#ffd600] px-1 font-black italic text-[#1b5e91] text-xs shadow border border-yellow-300">
-                DER
+              {/* DER Yellow Sun Logo Badge with Engineering Helmet */}
+              <div className="flex h-8 shrink-0 items-center justify-center gap-1 rounded bg-[#ffd600] px-2 font-black italic text-[#1b5e91] text-xs shadow border border-yellow-300">
+                <HardHat className="h-4 w-4 shrink-0 text-[#1b5e91]" />
+                <span>DER</span>
               </div>
               <div className="leading-tight">
                 <h1 className="text-xs font-black tracking-wide uppercase text-white">
