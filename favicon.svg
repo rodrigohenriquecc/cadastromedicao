@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f2b3c" />
+      <stop offset="50%" stop-color="#185e7b" />
+      <stop offset="100%" stop-color="#207ba1" />
+    </linearGradient>
+
+    <linearGradient id="hatGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffea75" />
+      <stop offset="35%" stop-color="#ffd600" />
+      <stop offset="100%" stop-color="#e69d00" />
+    </linearGradient>
+
+    <linearGradient id="brimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffd600" />
+      <stop offset="100%" stop-color="#c98200" />
+    </linearGradient>
+
+    <linearGradient id="roadGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+
+    <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.45" />
+    </filter>
+  </defs>
+
+  <!-- Background Squircle Container -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Technical Blueprint Grid Lines -->
+  <path d="M 64 0 V 512 M 128 0 V 512 M 192 0 V 512 M 256 0 V 512 M 320 0 V 512 M 384 0 V 512 M 448 0 V 512" stroke="#ffffff" stroke-width="1" stroke-opacity="0.08" />
+  <path d="M 0 64 H 512 M 0 128 H 512 M 0 192 H 512 M 0 256 H 512 M 0 320 H 512 M 0 384 H 512 M 0 448 H 512" stroke="#ffffff" stroke-width="1" stroke-opacity="0.08" />
+
+  <!-- Gold Border Accent -->
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="none" stroke="#ffd600" stroke-width="6" stroke-opacity="0.4" />
+
+  <g filter="url(#dropShadow)">
+    <!-- Technical Measurement Ticks (Left & Right) -->
+    <g stroke="#94a3b8" stroke-width="3" stroke-linecap="round" opacity="0.6">
+      <line x1="44" y1="180" x2="68" y2="180" />
+      <line x1="44" y1="210" x2="60" y2="210" />
+      <line x1="44" y1="240" x2="60" y2="240" />
+      <line x1="44" y1="270" x2="68" y2="270" />
+      <line x1="44" y1="300" x2="60" y2="300" />
+      <line x1="44" y1="330" x2="60" y2="330" />
+      <line x1="44" y1="360" x2="68" y2="360" />
+
+      <line x1="468" y1="180" x2="444" y2="180" />
+      <line x1="468" y1="210" x2="452" y2="210" />
+      <line x1="468" y1="240" x2="452" y2="240" />
+      <line x1="468" y1="270" x2="444" y2="270" />
+      <line x1="468" y1="300" x2="452" y2="300" />
+      <line x1="468" y1="330" x2="452" y2="330" />
+      <line x1="468" y1="360" x2="444" y2="360" />
+    </g>
+
+    <!-- Perspective Highway (Rodovia / Asfalto) -->
+    <g>
+      <path d="M 160 440 L 352 440 L 304 280 L 208 280 Z" fill="url(#roadGrad)" stroke="#475569" stroke-width="4" />
+      <line x1="172" y1="440" x2="214" y2="280" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.9" />
+      <line x1="340" y1="440" x2="298" y2="280" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.9" />
+      <line x1="256" y1="440" x2="256" y2="280" stroke="#ffd600" stroke-width="8" stroke-dasharray="20,16" stroke-linecap="butt" />
+    </g>
+
+    <!-- Crossed Drafting Compass (Compasso de Engenharia) -->
+    <g stroke="url(#metalGrad)" stroke-width="12" stroke-linecap="round" opacity="0.85">
+      <line x1="140" y1="130" x2="330" y2="320" />
+      <line x1="372" y1="130" x2="182" y2="320" />
+      <circle cx="256" cy="120" r="14" fill="#185e7b" stroke="#f8fafc" stroke-width="6" />
+    </g>
+
+    <!-- Civil Engineering Hardhat (Capacete de Engenharia) -->
+    <ellipse cx="256" cy="275" rx="145" ry="24" fill="#091e28" opacity="0.5" />
+    <path d="M 130 260 C 130 140, 382 140, 382 260 Z" fill="url(#hatGrad)" />
+
+    <!-- Hardhat Crest (Crista Central) -->
+    <path d="M 238 145 C 238 135, 274 135, 274 145 L 280 262 L 232 262 Z" fill="#ffe766" />
+    <path d="M 256 140 L 256 262" stroke="#ffffff" stroke-width="3" opacity="0.6" />
+
+    <!-- Hardhat Shine Highlight -->
+    <path d="M 160 240 C 160 175, 210 160, 230 156 C 210 170, 175 200, 172 245 Z" fill="#ffffff" opacity="0.35" />
+
+    <!-- Hardhat Brim -->
+    <path d="M 96 260 C 120 242, 392 242, 416 260 C 428 276, 84 276, 96 260 Z" fill="url(#brimGrad)" stroke="#b37d00" stroke-width="2" />
+    <path d="M 90 268 C 120 282, 392 282, 422 268 C 410 284, 102 284, 90 268 Z" fill="#8c5e00" />
+
+    <!-- DER Engineering Shield Badge -->
+    <g transform="translate(256, 222)">
+      <path d="M -24 -18 L 24 -18 L 24 6 C 24 20, 0 28, 0 28 C 0 28, -24 20, -24 6 Z" fill="#185e7b" stroke="#ffffff" stroke-width="3" />
+      <path d="M 0 -10 L 3 -2 L 10 -2 L 4 3 L 6 10 L 0 5 L -6 10 L -4 3 L -10 -2 L -3 -2 Z" fill="#ffd600" />
+    </g>
+  </g>
+</svg>
