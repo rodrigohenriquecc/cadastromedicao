@@ -18,8 +18,8 @@ import type { BiPoint, MeshLine, ServicePoint, StatusKey } from "@/lib/cgr-types
 import { REGION_STYLE, type Regions } from "@/lib/cgr-shapes";
 import { calculateKmFromLocation, formatKmBR, resolveColorName } from "@/lib/cgr-data";
 
-// 🔑 Insira sua API Key gratuita do OpenWeatherMap abaixo:
-const OPENWEATHERMAP_API_KEY = "012f1bec267774ea67dd181d467902ca";
+// 🔑 Chave do OpenWeatherMap carregada do arquivo .env (VITE_OWM_API_KEY)
+const OPENWEATHERMAP_API_KEY = import.meta.env.VITE_OWM_API_KEY as string | undefined;
 
 const STATUS_COLOR: Record<StatusKey, string> = {
   atual: "#2563eb",
