@@ -1,15 +1,17 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   CircleMarker,
   GeoJSON,
   MapContainer,
+  Marker,
   Polyline,
   Popup,
   TileLayer,
   ZoomControl,
   useMap,
+  useMapEvents,
 } from "react-leaflet";
 import { Calendar, Ruler, Layers } from "lucide-react";
 import type { BiPoint, MeshLine, ServicePoint, StatusKey } from "@/lib/cgr-types";
@@ -45,6 +47,86 @@ function FitBounds({ target }: { target: FitTarget | null }) {
     });
   }, [target, map]);
   return null;
+}
+
+// Distância euclidiana aproximada entre dois pontos [lat, lon]
+function segmentLength(coords: [number, number][]): number {
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const dlat = coords[i]![0] - coords[i - 1]![0];
+    const dlon = coords[i]![1] - coords[i - 1]![1];
+    total += Math.sqrt(dlat * dlat + dlon * dlon);
+  }
+  return total;
+}
+
+// Componente que renderiza 1 rótulo por rodovia, visível apenas a partir do zoom 10
+function HighwayLabels({ mesh }: { mesh: MeshLine[] }) {
+  const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
+
+  useMapEvents({
+    zoomend: () => setZoom(map.getZoom()),
+  });
+
+  // Calcula 1 ponto de rótulo por rodovia (ponto médio do segmento mais longo)
+  const labels = useMemo(() => {
+    // Agrupa segmentos por nome e encontra o mais longo por rodovia
+    const longestByName = new Map<string, { coords: [number, number][]; len: number }>();
+    for (const line of mesh) {
+      if (!line.name || line.coords.length < 2) continue;
+      const len = segmentLength(line.coords);
+      const existing = longestByName.get(line.name);
+      if (!existing || len > existing.len) {
+        longestByName.set(line.name, { coords: line.coords, len });
+      }
+    }
+
+    // Retorna o ponto médio de cada segmento mais longo
+    return Array.from(longestByName.entries()).map(([name, { coords }]) => {
+      const mid = coords[Math.floor(coords.length / 2)]!;
+      return { name, lat: mid[0], lon: mid[1] };
+    });
+  }, [mesh]);
+
+  // Só renderiza a partir do zoom 10 para não poluir o mapa
+  if (zoom < 10) return null;
+
+  return (
+    <>
+      {labels.map(({ name, lat, lon }) => {
+        const icon = L.divIcon({
+          className: "",
+          html: `<div style="
+            background: #1e3a8a;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.05em;
+            padding: 2px 7px;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            border: 1.5px solid rgba(255,255,255,0.25);
+            user-select: none;
+          ">${name}</div>`,
+          iconSize: undefined,
+          iconAnchor: undefined,
+        });
+        return (
+          <Marker
+            key={`hw-label-${name}`}
+            position={[lat, lon]}
+            icon={icon}
+            interactive={false}
+            zIndexOffset={-200}
+          />
+        );
+      })}
+    </>
+  );
 }
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR");
@@ -272,6 +354,8 @@ function MapView({
             </CircleMarker>
           );
         })}
+        {/* Rótulos das Rodovias - aparecem apenas no zoom >= 10 */}
+        <HighwayLabels mesh={mesh} />
       </MapContainer>
     </div>
   );
