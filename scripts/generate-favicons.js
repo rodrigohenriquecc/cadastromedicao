@@ -174,7 +174,7 @@ function getPixelRGBA(x, y, width, height) {
 
   // 2. Technical Scale Lines (Left & Right)
   if ((u >= 0.08 && u <= 0.14) || (u >= 0.86 && u <= 0.92)) {
-    if (v >= 0.35 && v <= 0.70) {
+    if (v >= 0.35 && v <= 0.7) {
       if (Math.abs((v * 100) % 6) < 0.8) {
         return [148, 163, 184, 180];
       }
@@ -182,8 +182,8 @@ function getPixelRGBA(x, y, width, height) {
   }
 
   // 3. Compass Legs (behind helmet)
-  const dLeg1 = Math.abs((v - 0.25) - (u - 0.27)); // Diagonal 1
-  const dLeg2 = Math.abs((v - 0.25) - (0.73 - u)); // Diagonal 2
+  const dLeg1 = Math.abs(v - 0.25 - (u - 0.27)); // Diagonal 1
+  const dLeg2 = Math.abs(v - 0.25 - (0.73 - u)); // Diagonal 2
   if ((dLeg1 < 0.025 || dLeg2 < 0.025) && v >= 0.24 && v <= 0.62) {
     return [226, 232, 240, 220];
   }
@@ -223,7 +223,7 @@ function getPixelRGBA(x, y, width, height) {
   }
 
   // 5. DER Badge on Hardhat
-  if (Math.abs(u - 0.5) <= 0.05 && v >= 0.40 && v <= 0.47) {
+  if (Math.abs(u - 0.5) <= 0.05 && v >= 0.4 && v <= 0.47) {
     if (Math.abs(u - 0.5) <= 0.02 && v >= 0.42 && v <= 0.45) {
       return [255, 214, 0, 255]; // Badge star center
     }

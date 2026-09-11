@@ -182,10 +182,7 @@ export function LeftSidebarPanel({
     return activeHighways.filter((h) => h.sp.toLowerCase().includes(q));
   }, [activeHighways, highwaySearch]);
 
-  const rcOptions = useMemo(
-    () => (rcs ?? []).map((r) => ({ value: r, label: `RC: ${r}` })),
-    [rcs],
-  );
+  const rcOptions = useMemo(() => (rcs ?? []).map((r) => ({ value: r, label: `RC: ${r}` })), [rcs]);
 
   const rcValue = useMemo(
     () => (selectedRcs ?? []).map((r) => ({ value: r, label: `RC: ${r}` })),
@@ -318,10 +315,15 @@ export function LeftSidebarPanel({
               </span>
             </div>
             <div className="flex items-baseline justify-between rounded-lg bg-[#1c2024] border-l-4 border-l-[#ffc107] border border-[#40464d] px-3 py-2 text-[#ffc107] shadow-inner">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-300">QNTD ACUMULADA</span>
+              <span className="text-xs font-black uppercase tracking-wider text-slate-300">
+                QNTD ACUMULADA
+              </span>
               <span className="font-mono text-lg font-black text-[#ffc107] tracking-tight">
                 {totalQuantidade !== null
-                  ? totalQuantidade.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  ? totalQuantidade.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
                   : "0,00"}
               </span>
             </div>
@@ -380,7 +382,11 @@ export function LeftSidebarPanel({
                       ) : (
                         <RefreshCw size={16} className="text-emerald-200" />
                       )}
-                      <span>{loading ? "Sincronizando do Google Drive..." : "Puxar Dados do Google Drive"}</span>
+                      <span>
+                        {loading
+                          ? "Sincronizando do Google Drive..."
+                          : "Puxar Dados do Google Drive"}
+                      </span>
                     </button>
                     <p className="mt-1.5 text-[10px] font-semibold text-emerald-800 text-center">
                       Carrega instantaneamente a planilha CM oficial compartilhada no nuvem.
@@ -437,7 +443,9 @@ export function LeftSidebarPanel({
 
                   {/* Status Box */}
                   <div className="rounded-md bg-slate-100 p-2 text-center border border-slate-200">
-                    <p className="text-[11px] font-semibold text-slate-700 leading-snug">{status}</p>
+                    <p className="text-[11px] font-semibold text-slate-700 leading-snug">
+                      {status}
+                    </p>
                   </div>
                 </div>
               )}
@@ -472,7 +480,9 @@ export function LeftSidebarPanel({
                     instanceId="sidebar-cgr-rc"
                     options={rcOptions}
                     value={rcValue}
-                    onChange={(selected) => onRcs(selected ? selected.map((item) => item.value) : [])}
+                    onChange={(selected) =>
+                      onRcs(selected ? selected.map((item) => item.value) : [])
+                    }
                     placeholder="Selecione os registros RC..."
                     noOptionsMessage={() => "Nenhum RC disponível no arquivo"}
                     menuPlacement="auto"
@@ -493,7 +503,12 @@ export function LeftSidebarPanel({
                         boxShadow: "none",
                         "&:hover": { borderColor: "#207ba1" },
                       }),
-                      menu: (base) => ({ ...base, fontSize: 13, zIndex: 2000, background: "#ffffff" }),
+                      menu: (base) => ({
+                        ...base,
+                        fontSize: 13,
+                        zIndex: 2000,
+                        background: "#ffffff",
+                      }),
                       option: (base, state) => ({
                         ...base,
                         minHeight: 44,
@@ -505,8 +520,8 @@ export function LeftSidebarPanel({
                         backgroundColor: state.isSelected
                           ? "#0d9488"
                           : state.isFocused
-                          ? "#f0fdf4"
-                          : "#ffffff",
+                            ? "#f0fdf4"
+                            : "#ffffff",
                         color: state.isSelected ? "#ffffff" : "#0f172a",
                       }),
                       multiValue: (base) => ({
@@ -591,7 +606,12 @@ export function LeftSidebarPanel({
                         boxShadow: "none",
                         "&:hover": { borderColor: "#207ba1" },
                       }),
-                      menu: (base) => ({ ...base, fontSize: 13, zIndex: 2000, background: "#ffffff" }),
+                      menu: (base) => ({
+                        ...base,
+                        fontSize: 13,
+                        zIndex: 2000,
+                        background: "#ffffff",
+                      }),
                       option: (base, state) => ({
                         ...base,
                         minHeight: 44,
@@ -603,8 +623,8 @@ export function LeftSidebarPanel({
                         backgroundColor: state.isSelected
                           ? "#207ba1"
                           : state.isFocused
-                          ? "#f0f9ff"
-                          : "#ffffff",
+                            ? "#f0f9ff"
+                            : "#ffffff",
                         color: state.isSelected ? "#ffffff" : "#0f172a",
                       }),
                       multiValue: (base) => ({
@@ -710,7 +730,9 @@ export function LeftSidebarPanel({
                     instanceId="sidebar-cgr-descricao"
                     options={descriptionOptions}
                     value={descriptionValue}
-                    onChange={(selected) => onDescriptions(selected ? selected.map((item) => item.value) : [])}
+                    onChange={(selected) =>
+                      onDescriptions(selected ? selected.map((item) => item.value) : [])
+                    }
                     placeholder="Selecione os serviços desejados..."
                     noOptionsMessage={() => "Carregue o CM.xlsx para ver serviços"}
                     menuPlacement="auto"
@@ -731,7 +753,12 @@ export function LeftSidebarPanel({
                         boxShadow: "none",
                         "&:hover": { borderColor: "#207ba1" },
                       }),
-                      menu: (base) => ({ ...base, fontSize: 13, zIndex: 2000, background: "#ffffff" }),
+                      menu: (base) => ({
+                        ...base,
+                        fontSize: 13,
+                        zIndex: 2000,
+                        background: "#ffffff",
+                      }),
                       option: (base, state) => ({
                         ...base,
                         minHeight: 44,
@@ -743,8 +770,8 @@ export function LeftSidebarPanel({
                         backgroundColor: state.isSelected
                           ? "#3730a3"
                           : state.isFocused
-                          ? "#eef2ff"
-                          : "#ffffff",
+                            ? "#eef2ff"
+                            : "#ffffff",
                         color: state.isSelected ? "#ffffff" : "#0f172a",
                       }),
                       multiValue: (base) => ({
@@ -771,36 +798,59 @@ export function LeftSidebarPanel({
                       </span>
                       <div className="flex items-center gap-1.5">
                         <span className="rounded bg-[#207ba1] px-2 py-0.5 text-[10px] font-bold text-white">
-                          {filteredVisibleServices.length} {filteredVisibleServices.length === 1 ? "item" : "itens"}
+                          {filteredVisibleServices.length}{" "}
+                          {filteredVisibleServices.length === 1 ? "item" : "itens"}
                         </span>
                         {totalQuantidade !== null && (
-                          <span className="rounded bg-[#ffc107] px-2 py-0.5 text-[10px] font-black text-slate-950 shadow-sm" title="Soma total das quantidades dos serviços filtrados">
-                            Total: {totalQuantidade.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          <span
+                            className="rounded bg-[#ffc107] px-2 py-0.5 text-[10px] font-black text-slate-950 shadow-sm"
+                            title="Soma total das quantidades dos serviços filtrados"
+                          >
+                            Total:{" "}
+                            {totalQuantidade.toLocaleString("pt-BR", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                           </span>
                         )}
                       </div>
                     </div>
 
                     {/* Active Filter Tags */}
-                    {(selectedHighways.length > 0 || highwaySearch.trim() || selectedRcs.length > 0 || selectedDescriptions.length > 0) && (
+                    {(selectedHighways.length > 0 ||
+                      highwaySearch.trim() ||
+                      selectedRcs.length > 0 ||
+                      selectedDescriptions.length > 0) && (
                       <div className="flex flex-wrap gap-1 mb-2">
                         {selectedHighways.map((hw) => (
-                          <span key={hw} className="inline-flex items-center gap-1 rounded bg-sky-100 border border-sky-300 px-1.5 py-0.5 text-[10px] font-bold text-sky-900">
+                          <span
+                            key={hw}
+                            className="inline-flex items-center gap-1 rounded bg-sky-100 border border-sky-300 px-1.5 py-0.5 text-[10px] font-bold text-sky-900"
+                          >
                             {hw}
                           </span>
                         ))}
                         {highwaySearch.trim() && (
-                          <span key="search" className="inline-flex items-center gap-1 rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-bold text-amber-900">
+                          <span
+                            key="search"
+                            className="inline-flex items-center gap-1 rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-bold text-amber-900"
+                          >
                             Busca: "{highwaySearch}"
                           </span>
                         )}
                         {selectedRcs.length > 0 && (
-                          <span key="rcs" className="inline-flex items-center gap-1 rounded bg-teal-100 border border-teal-300 px-1.5 py-0.5 text-[10px] font-bold text-teal-900">
+                          <span
+                            key="rcs"
+                            className="inline-flex items-center gap-1 rounded bg-teal-100 border border-teal-300 px-1.5 py-0.5 text-[10px] font-bold text-teal-900"
+                          >
                             {selectedRcs.length} RC(s)
                           </span>
                         )}
                         {selectedDescriptions.length > 0 && (
-                          <span key="desc" className="inline-flex items-center gap-1 rounded bg-indigo-100 border border-indigo-300 px-1.5 py-0.5 text-[10px] font-bold text-indigo-900">
+                          <span
+                            key="desc"
+                            className="inline-flex items-center gap-1 rounded bg-indigo-100 border border-indigo-300 px-1.5 py-0.5 text-[10px] font-bold text-indigo-900"
+                          >
                             {selectedDescriptions.length} serviço(s)
                           </span>
                         )}
@@ -823,7 +873,9 @@ export function LeftSidebarPanel({
                               <th className="px-2 py-1.5 border-b border-[#185e7b]">COMPR.</th>
                               <th className="px-2 py-1.5 border-b border-[#185e7b]">LARG.</th>
                               <th className="px-2 py-1.5 border-b border-[#185e7b]">ALT./ESP.</th>
-                              <th className="px-2 py-1.5 border-b border-[#185e7b] text-right">QNTD</th>
+                              <th className="px-2 py-1.5 border-b border-[#185e7b] text-right">
+                                QNTD
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-200 bg-white text-slate-900">
@@ -832,7 +884,7 @@ export function LeftSidebarPanel({
                                 <td className="px-2 py-1.5 font-mono font-bold text-slate-900 whitespace-nowrap">
                                   {typeof pt.kmInicial === "number" && Number.isFinite(pt.kmInicial)
                                     ? pt.kmInicial.toFixed(3).replace(".", ",")
-                                    : pt.kmInicial ?? "-"}
+                                    : (pt.kmInicial ?? "-")}
                                 </td>
                                 <td className="px-2 py-1.5 font-mono font-bold text-slate-800 whitespace-nowrap">
                                   {pt.sp}
@@ -861,11 +913,17 @@ export function LeftSidebarPanel({
                           {totalQuantidade !== null && (
                             <tfoot className="sticky bottom-0 bg-[#175773] text-white font-bold uppercase text-[10px] shadow-lg z-10">
                               <tr>
-                                <td colSpan={7} className="px-2 py-2 text-right font-bold border-t border-[#103d52] tracking-wider text-slate-200">
+                                <td
+                                  colSpan={7}
+                                  className="px-2 py-2 text-right font-bold border-t border-[#103d52] tracking-wider text-slate-200"
+                                >
                                   TOTAL QNTD:
                                 </td>
                                 <td className="px-2 py-2 text-right font-mono font-black text-[#ffc107] text-xs border-t border-[#103d52] whitespace-nowrap">
-                                  {totalQuantidade.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  {totalQuantidade.toLocaleString("pt-BR", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
                                 </td>
                               </tr>
                             </tfoot>
@@ -881,7 +939,8 @@ export function LeftSidebarPanel({
 
           {/* Footer info bar (Authentic DER Footer Style) */}
           <div className="shrink-0 bg-[#212529] px-3.5 py-2.5 text-center text-[10px] font-semibold text-slate-400 border-t border-[#181b1e]">
-            Copyright © 2026 <span className="font-bold text-white">DER-SP</span>. Todos os direitos reservados. • <span className="text-slate-400">Version 2.35.0</span>
+            Copyright © 2026 <span className="font-bold text-white">DER-SP</span>. Todos os direitos
+            reservados. • <span className="text-slate-400">Version 2.35.0</span>
           </div>
 
           {/* Sidebar Toggle Handle Button (Attached to sidebar right edge, minimum 44px touch width) */}
@@ -910,7 +969,10 @@ export function LeftSidebarPanel({
             <span>Filtros</span>
             {hasAnyFilter && (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ffd600] px-1 font-mono text-[10px] font-black text-[#1b5e91]">
-                {(selectedHighways.length > 0 ? 1 : 0) + (selectedRcs.length > 0 ? 1 : 0) + (selectedDescriptions.length > 0 ? 1 : 0) + (highwaySearch.trim() ? 1 : 0)}
+                {(selectedHighways.length > 0 ? 1 : 0) +
+                  (selectedRcs.length > 0 ? 1 : 0) +
+                  (selectedDescriptions.length > 0 ? 1 : 0) +
+                  (highwaySearch.trim() ? 1 : 0)}
               </span>
             )}
           </button>
@@ -940,9 +1002,14 @@ export function LeftSidebarPanel({
           {/* 4. Total QNTD KPI Badge on Mobile */}
           {totalQuantidade !== null && (
             <div className="flex flex-col items-end justify-center rounded-xl bg-[#14171a] border border-slate-800 px-2.5 py-1 text-right">
-              <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Total</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">
+                Total
+              </span>
               <span className="font-mono text-xs font-black text-[#ffc107]">
-                {totalQuantidade.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                {totalQuantidade.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })}
               </span>
             </div>
           )}

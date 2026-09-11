@@ -16,6 +16,9 @@ import type { BiPoint, MeshLine, ServicePoint, StatusKey } from "@/lib/cgr-types
 import { REGION_STYLE, type Regions } from "@/lib/cgr-shapes";
 import { calculateKmFromLocation, formatKmBR, resolveColorName } from "@/lib/cgr-data";
 
+// 🔑 Insira sua API Key gratuita do OpenWeatherMap abaixo:
+const OPENWEATHERMAP_API_KEY = "012f1bec267774ea67dd181d467902ca";
+
 const STATUS_COLOR: Record<StatusKey, string> = {
   atual: "#2563eb",
   vencido: "#dc2626",
@@ -60,9 +63,7 @@ function ServicePopup({ point }: { point: ServicePoint }) {
             </span>
           )}
         </div>
-        <p className="text-sm font-semibold leading-snug text-foreground">
-          {point.descricao}
-        </p>
+        <p className="text-sm font-semibold leading-snug text-foreground">{point.descricao}</p>
       </div>
       <dl className="space-y-1 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
@@ -86,7 +87,14 @@ function ServicePopup({ point }: { point: ServicePoint }) {
         )}
         {(point.comprimento || point.largura || point.altEsp) && (
           <div className="text-[11px] text-slate-600">
-            Dim: {[point.comprimento && `Comp: ${point.comprimento}`, point.largura && `Larg: ${point.largura}`, point.altEsp && `Alt/Esp: ${point.altEsp}`].filter(Boolean).join(" | ")}
+            Dim:{" "}
+            {[
+              point.comprimento && `Comp: ${point.comprimento}`,
+              point.largura && `Larg: ${point.largura}`,
+              point.altEsp && `Alt/Esp: ${point.altEsp}`,
+            ]
+              .filter(Boolean)
+              .join(" | ")}
           </div>
         )}
         {point.quantidade && (
@@ -132,13 +140,29 @@ function MapView({
         className="h-[100dvh] w-full touch-none"
         preferCanvas
       >
+        {/* Mapa Base */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | DR.02 Sistema Colaborativo'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        {/* Camada de Precipitação / Chuva (OpenWeatherMap) - Posicionada antes dos vetores para ficar abaixo */}
+        {OPENWEATHERMAP_API_KEY && OPENWEATHERMAP_API_KEY !== "SUA_CHAVE_API_AQUI" && (
+          <TileLayer
+            url={`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHERMAP_API_KEY}`}
+            attribution='&copy; <a href="https://openweathermap.org/">OpenWeatherMap</a>'
+            opacity={0.65}
+            zIndex={10}
+          />
+        )}
+
         <ZoomControl position="topright" />
         {regions && regions.features.length > 0 && (
-          <GeoJSON key={regions.features.length} data={regions} style={() => ({ ...REGION_STYLE })} />
+          <GeoJSON
+            key={regions.features.length}
+            data={regions}
+            style={() => ({ ...REGION_STYLE })}
+          />
         )}
         <FitBounds target={target} />
 
@@ -208,7 +232,9 @@ function MapView({
                 </span>
               </div>
               <div className="py-1">
-                <p className="text-xs text-muted-foreground font-medium">Quilometragem Aproximada:</p>
+                <p className="text-xs text-muted-foreground font-medium">
+                  Quilometragem Aproximada:
+                </p>
                 <p className="text-lg font-extrabold text-slate-900 tracking-tight">
                   {clickedInfo.km !== null ? `Km ${formatKmBR(clickedInfo.km)}` : "Km Indisponível"}
                 </p>

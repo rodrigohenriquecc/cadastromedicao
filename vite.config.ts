@@ -31,7 +31,8 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("leaflet")) return "leaflet";
-          if (id.includes("xlsx") || id.includes("jszip") || id.includes("papaparse")) return "excel";
+          if (id.includes("xlsx") || id.includes("jszip") || id.includes("papaparse"))
+            return "excel";
           if (id.includes("react-select") || id.includes("lucide-react")) return "ui-vendor";
           return undefined;
         },

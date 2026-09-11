@@ -77,7 +77,10 @@ export function parseBiCsv(text: string): Map<string, BiPoint[]> {
   return byRoad;
 }
 
-export function mergeMetaPoints(byRoad: Map<string, BiPoint[]>, text: string): Map<string, BiPoint[]> {
+export function mergeMetaPoints(
+  byRoad: Map<string, BiPoint[]>,
+  text: string,
+): Map<string, BiPoint[]> {
   const parsed = Papa.parse<Record<string, string>>(text.replace(/^\uFEFF/, ""), {
     header: true,
     skipEmptyLines: true,
@@ -198,7 +201,11 @@ export function getHighwaySummaries(
   );
 }
 
-export function findNearest(byRoad: Map<string, BiPoint[]>, sp: string, km: number): BiPoint | null {
+export function findNearest(
+  byRoad: Map<string, BiPoint[]>,
+  sp: string,
+  km: number,
+): BiPoint | null {
   const list = byRoad.get(normalizeSp(sp));
   if (!list || list.length === 0) return null;
   let best = list[0] as BiPoint;
@@ -293,7 +300,13 @@ export function snapSegmentToMesh(
   mesh: MeshLine[],
   fallbackCoords?: [number, number][],
 ): [number, number][] {
-  if (!mesh || mesh.length === 0) return fallbackCoords || [[startLat, startLon], [endLat, endLon]];
+  if (!mesh || mesh.length === 0)
+    return (
+      fallbackCoords || [
+        [startLat, startLon],
+        [endLat, endLon],
+      ]
+    );
 
   const normTargetSp = normalizeSp(sp);
   const targetClean = normTargetSp.replace(/[^A-Z0-9]/g, "");
@@ -301,9 +314,7 @@ export function snapSegmentToMesh(
   let candidateLines = mesh.filter((m) => {
     const lineNorm = normalizeSp(m.name).replace(/[^A-Z0-9]/g, "");
     return (
-      lineNorm === targetClean ||
-      lineNorm.includes(targetClean) ||
-      targetClean.includes(lineNorm)
+      lineNorm === targetClean || lineNorm.includes(targetClean) || targetClean.includes(lineNorm)
     );
   });
 
@@ -342,7 +353,10 @@ export function snapSegmentToMesh(
       const lenSq = dLat * dLat + dLon * dLon;
       if (lenSq === 0) continue;
 
-      const tStart = Math.max(0, Math.min(1, ((startLat - latA) * dLat + (startLon - lonA) * dLon) / lenSq));
+      const tStart = Math.max(
+        0,
+        Math.min(1, ((startLat - latA) * dLat + (startLon - lonA) * dLon) / lenSq),
+      );
       const projStartLat = latA + tStart * dLat;
       const projStartLon = lonA + tStart * dLon;
       const distStartSq = (startLat - projStartLat) ** 2 + (startLon - projStartLon) ** 2;
@@ -353,7 +367,10 @@ export function snapSegmentToMesh(
         lineStartProj = [projStartLat, projStartLon];
       }
 
-      const tEnd = Math.max(0, Math.min(1, ((endLat - latA) * dLat + (endLon - lonA) * dLon) / lenSq));
+      const tEnd = Math.max(
+        0,
+        Math.min(1, ((endLat - latA) * dLat + (endLon - lonA) * dLon) / lenSq),
+      );
       const projEndLat = latA + tEnd * dLat;
       const projEndLon = lonA + tEnd * dLon;
       const distEndSq = (endLat - projEndLat) ** 2 + (endLon - projEndLon) ** 2;
@@ -377,7 +394,12 @@ export function snapSegmentToMesh(
   }
 
   if (!bestLine || minTotalDistSq > 0.05 || bestStartIdx === -1 || bestEndIdx === -1) {
-    return fallbackCoords || [[startLat, startLon], [endLat, endLon]];
+    return (
+      fallbackCoords || [
+        [startLat, startLon],
+        [endLat, endLon],
+      ]
+    );
   }
 
   const coords = bestLine.coords;
@@ -412,7 +434,12 @@ export function snapSegmentToMesh(
     }
   }
 
-  return cleaned.length > 1 ? cleaned : (fallbackCoords || [[startLat, startLon], [endLat, endLon]]);
+  return cleaned.length > 1
+    ? cleaned
+    : fallbackCoords || [
+        [startLat, startLon],
+        [endLat, endLon],
+      ];
 }
 
 export function snapPointToRoad(
@@ -429,9 +456,7 @@ export function snapPointToRoad(
   let candidateLines = mesh.filter((m) => {
     const lineNorm = normalizeSp(m.name).replace(/[^A-Z0-9]/g, "");
     return (
-      lineNorm === targetClean ||
-      lineNorm.includes(targetClean) ||
-      targetClean.includes(lineNorm)
+      lineNorm === targetClean || lineNorm.includes(targetClean) || targetClean.includes(lineNorm)
     );
   });
 
@@ -459,10 +484,7 @@ export function snapPointToRoad(
 
       const t = Math.max(
         0,
-        Math.min(
-          1,
-          ((lat - latA) * dLat + (lon - lonA) * dLon) / (dLat * dLat + dLon * dLon),
-        ),
+        Math.min(1, ((lat - latA) * dLat + (lon - lonA) * dLon) / (dLat * dLat + dLon * dLon)),
       );
 
       const projLat = latA + t * dLat;
@@ -499,7 +521,11 @@ export function calculateKmFromLocation(
     const targetClean = normSp.replace(/[^A-Z0-9]/g, "");
     for (const [key, val] of byRoad.entries()) {
       const keyClean = key.replace(/[^A-Z0-9]/g, "");
-      if (keyClean === targetClean || keyClean.includes(targetClean) || targetClean.includes(keyClean)) {
+      if (
+        keyClean === targetClean ||
+        keyClean.includes(targetClean) ||
+        targetClean.includes(keyClean)
+      ) {
         list = val;
         break;
       }
@@ -526,10 +552,7 @@ export function calculateKmFromLocation(
 
     const t = Math.max(
       0,
-      Math.min(
-        1,
-        ((lat - p1.lat) * dLat + (lon - p1.lon) * dLon) / (dLat * dLat + dLon * dLon),
-      ),
+      Math.min(1, ((lat - p1.lat) * dLat + (lon - p1.lon) * dLon) / (dLat * dLat + dLon * dLon)),
     );
 
     const projLat = p1.lat + t * dLat;
@@ -567,7 +590,8 @@ export function parseKml(xml: string): MeshLine[] {
       const coords: [number, number][] = [];
       for (const chunk of (g.textContent ?? "").trim().split(/\s+/)) {
         const [lon, lat] = chunk.split(",").map(Number);
-        if (Number.isFinite(lat) && Number.isFinite(lon)) coords.push([lat as number, lon as number]);
+        if (Number.isFinite(lat) && Number.isFinite(lon))
+          coords.push([lat as number, lon as number]);
       }
       if (coords.length > 1) lines.push({ coords, name });
     }
@@ -677,7 +701,7 @@ export function resolveColorName(raw: string): string {
   const s = raw.trim().toLowerCase();
   if (!s) return "blue";
   if (COLOR_MAP[s]) return COLOR_MAP[s]!;
-  
+
   const normalized = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   if (COLOR_MAP[normalized]) return COLOR_MAP[normalized]!;
 
@@ -694,11 +718,16 @@ function parseSingleColor(raw: string): { bg?: string; text?: string } | null {
   return { bg, text: "#ffffff" };
 }
 
-export function parseCustomColor(val: unknown): { corFundo?: string | undefined; corTexto?: string | undefined } | null {
+export function parseCustomColor(
+  val: unknown,
+): { corFundo?: string | undefined; corTexto?: string | undefined } | null {
   const str = String(val ?? "").trim();
   if (!str) return null;
 
-  const parts = str.split(/[/,;:-]/).map((p) => p.trim()).filter(Boolean);
+  const parts = str
+    .split(/[/,;:-]/)
+    .map((p) => p.trim())
+    .filter(Boolean);
   if (parts.length >= 2) {
     const p0 = parts[0] ?? "";
     const p1 = parts[1] ?? "";
@@ -747,7 +776,7 @@ export async function parseCmWorkbook(
       const sp = normalizeSp(pick("SP", "RODOVIA"));
       const kmInicial = toNumber(pick("KM INICIAL", "KM INICIO", "KM"));
       if (!sp || kmInicial === null || !Number.isFinite(kmInicial)) continue;
-      
+
       let loc = interpolateLocation(byRoad, sp, kmInicial);
       if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lon)) continue;
 
@@ -756,8 +785,13 @@ export async function parseCmWorkbook(
       }
       if (!Number.isFinite(loc.lat) || !Number.isFinite(loc.lon)) continue;
 
-      const kmFinalRaw = toNumber(pick("KM FINAL", "KM FIN", "KM_FINAL", "KM F", "KM-FINAL", "KMFINAL"));
-      const isDifferentKm = kmFinalRaw !== null && Number.isFinite(kmFinalRaw) && Math.abs(kmFinalRaw - kmInicial) >= 0.001;
+      const kmFinalRaw = toNumber(
+        pick("KM FINAL", "KM FIN", "KM_FINAL", "KM F", "KM-FINAL", "KMFINAL"),
+      );
+      const isDifferentKm =
+        kmFinalRaw !== null &&
+        Number.isFinite(kmFinalRaw) &&
+        Math.abs(kmFinalRaw - kmInicial) >= 0.001;
       const kmFinal = isDifferentKm ? kmFinalRaw : kmInicial;
 
       let segmentCoords = isDifferentKm
@@ -767,7 +801,15 @@ export async function parseCmWorkbook(
       if (segmentCoords && segmentCoords.length > 1 && mesh && mesh.length > 0) {
         const firstPt = segmentCoords[0]!;
         const lastPt = segmentCoords[segmentCoords.length - 1]!;
-        segmentCoords = snapSegmentToMesh(sp, firstPt[0], firstPt[1], lastPt[0], lastPt[1], mesh, segmentCoords);
+        segmentCoords = snapSegmentToMesh(
+          sp,
+          firstPt[0],
+          firstPt[1],
+          lastPt[0],
+          lastPt[1],
+          mesh,
+          segmentCoords,
+        );
       }
 
       const descricao = String(pick("DESCRICAO", "SERVICO", "DESCRIÇÃO") ?? "").trim();
@@ -785,17 +827,36 @@ export async function parseCmWorkbook(
           "QTD",
           "QTDE",
           "QTD.",
-          "QUANT"
-        ) ?? ""
+          "QUANT",
+        ) ?? "",
       ).trim();
       const sentido = String(pick("SENTIDO", "SENT", "PISTA", "FAIXA", "LADO") ?? "").trim();
-      const comprimento = String(pick("COMPRIMENTO", "COMPR", "COMP", "EXTENSAO", "EXTENSÃO") ?? "").trim();
+      const comprimento = String(
+        pick("COMPRIMENTO", "COMPR", "COMP", "EXTENSAO", "EXTENSÃO") ?? "",
+      ).trim();
       const largura = String(pick("LARGURA", "LARG") ?? "").trim();
-      const altEsp = String(pick("ALTURA", "ALT", "ESPESSURA", "ESP", "ESP. (CM)", "ESP (CM)", "ESP (M)", "ESP.(M)", "ALT. OU ESP.", "ALT/ESP") ?? "").trim();
-      const rc = String(pick("RC", "Nº RC", "NO RC", "NUMERO RC", "REGISTRO RC", "RC N") ?? "").trim();
+      const altEsp = String(
+        pick(
+          "ALTURA",
+          "ALT",
+          "ESPESSURA",
+          "ESP",
+          "ESP. (CM)",
+          "ESP (CM)",
+          "ESP (M)",
+          "ESP.(M)",
+          "ALT. OU ESP.",
+          "ALT/ESP",
+        ) ?? "",
+      ).trim();
+      const rc = String(
+        pick("RC", "Nº RC", "NO RC", "NUMERO RC", "REGISTRO RC", "RC N") ?? "",
+      ).trim();
 
       const k10 = keys[10];
-      const corVal = pick("COR", "CORES", "COR DA BOLINHA", "COR BOLINHA", "COR MARCADOR") ?? (k10 ? row[k10] : undefined);
+      const corVal =
+        pick("COR", "CORES", "COR DA BOLINHA", "COR BOLINHA", "COR MARCADOR") ??
+        (k10 ? row[k10] : undefined);
       const customColors = parseCustomColor(corVal);
 
       points.push({

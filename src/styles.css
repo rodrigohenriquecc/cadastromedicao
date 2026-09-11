@@ -247,15 +247,21 @@ select,
 @keyframes siren-pulse {
   0% {
     transform: scale(0.9);
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.8), 0 0 10px rgba(59, 130, 246, 0.9);
+    box-shadow:
+      0 0 0 0 rgba(37, 99, 235, 0.8),
+      0 0 10px rgba(59, 130, 246, 0.9);
   }
   50% {
     transform: scale(1.2);
-    box-shadow: 0 0 0 14px rgba(37, 99, 235, 0), 0 0 22px rgba(147, 197, 253, 1);
+    box-shadow:
+      0 0 0 14px rgba(37, 99, 235, 0),
+      0 0 22px rgba(147, 197, 253, 1);
   }
   100% {
     transform: scale(0.9);
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0), 0 0 10px rgba(59, 130, 246, 0.9);
+    box-shadow:
+      0 0 0 0 rgba(37, 99, 235, 0),
+      0 0 10px rgba(59, 130, 246, 0.9);
   }
 }
 
@@ -280,7 +286,8 @@ select,
 }
 
 @keyframes siren-flash-glow {
-  0%, 100% {
+  0%,
+  100% {
     background-color: #2563eb;
     filter: drop-shadow(0 0 8px #2563eb);
   }
@@ -321,7 +328,9 @@ select,
   background: #2563eb;
   border: 2px solid #ffffff;
   box-shadow: 0 0 12px rgba(37, 99, 235, 0.9);
-  animation: siren-pulse 1.3s infinite ease-in-out, siren-flash-glow 1.3s infinite ease-in-out;
+  animation:
+    siren-pulse 1.3s infinite ease-in-out,
+    siren-flash-glow 1.3s infinite ease-in-out;
   position: relative;
   z-index: 2;
 }
@@ -375,7 +384,9 @@ select,
   align-items: center !important;
   justify-content: center !important;
   border-radius: 9999px !important;
-  transition: background-color 0.2s ease, color 0.2s ease !important;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease !important;
 }
 
 .leaflet-container .leaflet-popup-close-button:hover,
@@ -387,5 +398,3 @@ select,
 .touch-pan-x {
   -webkit-overflow-scrolling: touch;
 }
-
-

@@ -1,7 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { LeftSidebarPanel } from "@/components/cgr/LeftSidebarPanel";
-import { getHighwaySummaries, mergeMetaPoints, parseBiCsv, parseCmWorkbook, parseKmz, snapPointToRoad, snapSegmentToMesh } from "@/lib/cgr-data";
+import {
+  getHighwaySummaries,
+  mergeMetaPoints,
+  parseBiCsv,
+  parseCmWorkbook,
+  parseKmz,
+  snapPointToRoad,
+  snapSegmentToMesh,
+} from "@/lib/cgr-data";
 import { loadShapefiles, type Regions } from "@/lib/cgr-shapes";
 import type { BiPoint, MeshLine, ServicePoint } from "@/lib/cgr-types";
 import type { FitTarget } from "@/components/cgr/MapView";
@@ -96,9 +104,7 @@ function Index() {
   const highwaySummaries = useMemo(() => {
     const selectedRc = new Set(selectedRcs);
     const relevantPoints =
-      selectedRc.size === 0
-        ? points
-        : points.filter((p) => p.rc && selectedRc.has(p.rc));
+      selectedRc.size === 0 ? points : points.filter((p) => p.rc && selectedRc.has(p.rc));
     return getHighwaySummaries(byRoad, relevantPoints);
   }, [byRoad, points, selectedRcs]);
 
@@ -138,7 +144,15 @@ function Index() {
           if (pt.segmentCoords && pt.segmentCoords.length > 1) {
             const firstPt = pt.segmentCoords[0]!;
             const lastPt = pt.segmentCoords[pt.segmentCoords.length - 1]!;
-            snappedSegment = snapSegmentToMesh(pt.sp, firstPt[0], firstPt[1], lastPt[0], lastPt[1], mesh, pt.segmentCoords);
+            snappedSegment = snapSegmentToMesh(
+              pt.sp,
+              firstPt[0],
+              firstPt[1],
+              lastPt[0],
+              lastPt[1],
+              mesh,
+              pt.segmentCoords,
+            );
           }
 
           return {
@@ -249,7 +263,13 @@ function Index() {
         fallback={<div className="flex h-[100dvh] w-full items-center justify-center bg-muted" />}
       >
         {mounted && (
-          <MapView points={visiblePoints} mesh={mesh} target={target} regions={regions} byRoad={byRoad} />
+          <MapView
+            points={visiblePoints}
+            mesh={mesh}
+            target={target}
+            regions={regions}
+            byRoad={byRoad}
+          />
         )}
       </Suspense>
 
@@ -279,5 +299,3 @@ function Index() {
     </main>
   );
 }
-
-
