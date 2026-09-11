@@ -13,7 +13,7 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
-import { Calendar, Ruler, Layers } from "lucide-react";
+import { Calendar, Ruler, Layers, ExternalLink } from "lucide-react";
 import type { BiPoint, MeshLine, ServicePoint, StatusKey } from "@/lib/cgr-types";
 import { REGION_STYLE, type Regions } from "@/lib/cgr-shapes";
 import { calculateKmFromLocation, formatKmBR, resolveColorName } from "@/lib/cgr-data";
@@ -186,6 +186,18 @@ function ServicePopup({ point }: { point: ServicePoint }) {
           </div>
         )}
       </dl>
+      {point.fotos && point.fotos.trim() !== "" && (
+        <a
+          href={point.fotos}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex items-center justify-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition-colors"
+          style={{ color: 'white' }}
+        >
+          <ExternalLink size={12} style={{ color: 'white' }} />
+          Visitar Link
+        </a>
+      )}
     </div>
   );
 }

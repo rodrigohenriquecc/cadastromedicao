@@ -17,6 +17,7 @@ export type ServicePoint = {
   largura?: string | undefined;
   altEsp?: string | undefined;
   rc?: string | undefined;
+  fotos?: string | undefined;
   lat: number;
   lon: number;
   segmentCoords?: [number, number][] | undefined;

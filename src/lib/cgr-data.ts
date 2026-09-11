@@ -852,6 +852,7 @@ export async function parseCmWorkbook(
       const rc = String(
         pick("RC", "Nº RC", "NO RC", "NUMERO RC", "REGISTRO RC", "RC N") ?? "",
       ).trim();
+      const fotos = String(pick("FOTOS", "FOTO", "LINK", "LINK FOTO") ?? "").trim();
 
       const k10 = keys[10];
       const corVal =
@@ -872,6 +873,7 @@ export async function parseCmWorkbook(
         largura: largura || undefined,
         altEsp: altEsp || undefined,
         rc: rc || undefined,
+        fotos: fotos || undefined,
         corFundo: customColors?.corFundo ?? undefined,
         corTexto: customColors?.corTexto ?? undefined,
         lat: loc.lat,
