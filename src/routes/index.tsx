@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { LeftSidebarPanel } from "@/components/cgr/LeftSidebarPanel";
 import {
   getHighwaySummaries,
@@ -46,6 +46,10 @@ function Index() {
   const [selectedRcs, setSelectedRcs] = useState<string[]>([]);
   const [target, setTarget] = useState<FitTarget | null>(null);
   const [mounted, setMounted] = useState(false);
+  // Controla se o usuário já fez upload manual (nesse caso, o auto-load não sobrepõe)
+  const fileLoadedByUser = useRef(false);
+  // Controla se o auto-load já foi disparado uma vez
+  const autoLoadDone = useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -78,6 +82,15 @@ function Index() {
       cancelled = true;
     };
   }, []);
+
+  // ✅ Auto-carregamento da planilha do Google Drive assim que a malha estiver pronta
+  useEffect(() => {
+    if (mesh.length > 0 && byRoad.size > 0 && !autoLoadDone.current && !fileLoadedByUser.current) {
+      autoLoadDone.current = true;
+      handleFetchGoogleDrive();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mesh, byRoad]);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,6 +199,8 @@ function Index() {
   };
 
   const handleFile = async (file: File) => {
+    // Arquivo local tem prioridade — marca que o usuário carregou manualmente
+    fileLoadedByUser.current = true;
     await handleProcessBuffer(await file.arrayBuffer(), "arquivo local");
   };
 

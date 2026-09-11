@@ -146,12 +146,12 @@ function MapView({
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Camada de Precipitação / Chuva (OpenWeatherMap) - Posicionada antes dos vetores para ficar abaixo */}
+        {/* Camada Meteorológica (OpenWeatherMap) - clouds_new = sempre visível para confirmar funcionamento */}
         {OPENWEATHERMAP_API_KEY && OPENWEATHERMAP_API_KEY !== "SUA_CHAVE_API_AQUI" && (
           <TileLayer
-            url={`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHERMAP_API_KEY}`}
+            url={`https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OPENWEATHERMAP_API_KEY}`}
             attribution='&copy; <a href="https://openweathermap.org/">OpenWeatherMap</a>'
-            opacity={0.65}
+            opacity={0.55}
             zIndex={10}
           />
         )}
